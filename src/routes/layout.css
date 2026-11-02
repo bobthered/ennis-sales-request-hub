@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@import 'sveltewind/themes/palettes.css';
+@source '../../node_modules/sveltewind/dist';
+
+@layer base {
+	body {
+		@apply bg-slate-50 text-slate-950 antialiased;
+	}
+}
