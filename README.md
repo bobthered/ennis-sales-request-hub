@@ -44,7 +44,7 @@ The editor autosaves changes and allows files to be attached before final save. 
 
 Files are stored directly in MongoDB for this MVP, limited to 1 MB each, 3 MB total and 10 files per request. Uploads update the attachment and activity marker atomically; ordinary queries exclude bytes. Creator downloads require the owner cookie and are served as attachments. Larger file storage can be added later.
 
-Recipient links, responses, Q&A posting, manual deletion, and closing requests remain unimplemented. The sample requests are removed. No live application data was used by the automated integration tests.
+The overview can generate a recipient link to view details and download attachments. Generating a new link replaces the previous one. Only a hash is stored; copy the link before leaving the result page. Response submission, Q&A posting, manual deletion, and closing requests remain unimplemented. The sample requests are removed. No live application data was used by the automated integration tests.
 
 ## Tests
 
@@ -52,7 +52,7 @@ Recipient links, responses, Q&A posting, manual deletion, and closing requests r
 
 ## MongoDB connection
 
-Add `MONGODB_URI` to your local `.env`, including the database name in the URI, then restart the dev server. `.env` is ignored by Git; `.env.example` documents the variable without credentials. Set the same private variable in Vercel for each deployment environment that needs the database.
+Add `MONGODB_URI` to your local `.env`, and set `MONGODB_DB_NAME` to the desired database name, then restart the dev server. `.env` is ignored by Git; `.env.example` documents the variable without credentials. Set the same private variable in Vercel for each deployment environment that needs the database.
 
 `src/env.ts` declares the private runtime variable. The server hook awaits `connectDatabase()` before resolving requests when it is configured. The helper reuses the default Mongoose connection and shares an in-flight connection attempt across concurrent requests. Failed attempts are cleared for retry. The pool is capped at 10 connections per server instance, with a five-second server-selection timeout. Driver errors and the URI are not exposed to the browser.
 

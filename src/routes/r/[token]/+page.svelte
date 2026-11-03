@@ -1,12 +1,21 @@
 <script lang="ts">
-	import { Button, Card, Div, H2, Input, Label, P, Textarea } from 'sveltewind/components';
+	import { A, Button, Card, Div, H2, Input, Label, P, Textarea } from 'sveltewind/components';
+	import type { PageProps } from './$types';
+	let { data, params }: PageProps = $props();
 </script>
 
 <svelte:head><title>Respond to request · Ennis</title></svelte:head>
 <Card class="space-y-3 bg-white p-6"
 	><H2>Before you respond</H2><P
-		>Responding is optional. Only the request creator and you will be able to see your response.</P
-	><P>Shared attachments: no files attached.</P></Card
+		>Responding is optional. {data.request.visibility === 'shared'
+			? 'Responses will be visible to everyone with the link.'
+			: 'Only the creator and you will see your response.'}</P
+	><H2>Shared attachments</H2>
+	{#each data.request.attachments as file}<A href={`/r/${params.token}/files/${file.key}`} download
+			>{file.name}</A
+		>{:else}<P>No files attached.</P>{/each}
+	{#if data.request.due}<P>Due: {data.request.due}</P>{/if}
+	{#each data.request.questions as question}<P>{question}</P>{/each}</Card
 >
 <Card class="space-y-5 bg-white p-6"
 	><H2>Your response</H2>

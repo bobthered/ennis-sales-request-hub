@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MONGODB_URI } from '$app/env/private';
+import { MONGODB_URI, MONGODB_DB_NAME } from '$app/env/private';
 
 type ConnectionCache = { pending: Promise<typeof mongoose> | null };
 const serverGlobal = globalThis as typeof globalThis & {
@@ -18,6 +18,7 @@ export async function connectDatabase(): Promise<typeof mongoose> {
 
 	cache.pending = mongoose
 		.connect(MONGODB_URI, {
+			dbName: MONGODB_DB_NAME,
 			maxPoolSize: 10,
 			minPoolSize: 0,
 			serverSelectionTimeoutMS: 5000,

@@ -6,7 +6,7 @@ Keep project work inside this directory.
 
 - SvelteKit 3, Svelte 5 runes, TypeScript, npm, and the Vercel adapter.
 - MongoDB via Mongoose. Keep models and database code in `src/lib/server`; use the Node runtime.
-- Database connection lives in `src/lib/server/db.ts`, using private `MONGODB_URI` from `.env` (or Vercel environment variables). Never invent or commit credentials. The server hook connects when configured; builds and unconfigured previews skip connection. Await `connectDatabase()` before model operations outside the hook-managed request lifecycle. Reuse the default Mongoose connection; do not disconnect after each request.
+- Database connection lives in `src/lib/server/db.ts`, using private `MONGODB_URI` and optional `MONGODB_DB_NAME` from `.env` (or Vercel environment variables). Never invent or commit credentials. The server hook connects when configured; builds and unconfigured previews skip connection. Await `connectDatabase()` before model operations outside the hook-managed request lifecycle. Reuse the default Mongoose connection; do not disconnect after each request.
 
 ## Components
 
@@ -24,7 +24,7 @@ Keep project work inside this directory.
 - Participation is voluntary. No required invite list, participation tracking, or automatic reminders.
 - Shared attachments and Questions & Answers belong to requests. Recipients ask; only creators answer.
 - Before enabling writes, enforce ownership, visibility, edit tokens, and open/closed status on the server. Never expose private answers or edit tokens through public loaders.
-- Request creation, draft autosave, final save, and creator attachment uploads/downloads persist in MongoDB. Recipient response/sharing routes remain scaffolds. Do not reintroduce sample requests.
+- Request creation, draft autosave, final save, and creator attachment uploads/downloads persist in MongoDB. Recipient links expose project details and attachments using hashed tokens. Recipient response submission remains a scaffold. Do not reintroduce sample requests.
 - Starting a request is a POST operation: delete only this creator's untouched blank drafts, then create a new draft before opening the editor. Preserve any draft with activity, text, questions, a date, changed visibility, attachments, or a share token. Never delete another creator's drafts.
 - Attachments are stored in MongoDB for this MVP: 1 MB per file, 3 MB total, at most 10 files per request. Normal queries must not return file bytes. Update these limits/storage together if requirements grow.
 

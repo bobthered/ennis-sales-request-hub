@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { A, Div, H1, Nav, P } from 'sveltewind/components';
+	import { A, Div, H1, Tabs, P } from 'sveltewind/components';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import type { LayoutProps } from './$types';
 	let { data, children }: LayoutProps = $props();
 </script>
@@ -9,13 +11,20 @@
 		>Creator workspace</P
 	></Div
 >
-<Nav
+<Tabs
 	aria-label="Request sections"
-	class="flex flex-wrap gap-5 border-b border-slate-200 pb-4 dark:border-slate-800"
-	><A href={`/requests/${encodeURIComponent(data.request.id)}`}>Overview</A><A
-		href={`/requests/${encodeURIComponent(data.request.id)}/edit`}>Edit request</A
-	><A href={`/requests/${encodeURIComponent(data.request.id)}/responses`}>Responses</A><A
-		href={`/requests/${encodeURIComponent(data.request.id)}/questions`}>Questions & Answers</A
-	></Nav
->
+	tabs={[
+		{ title: 'Overview', value: `/requests/${data.request.id}` },
+		{ title: 'Edit request', value: `/requests/${data.request.id}/edit` },
+		{ title: 'Responses', value: `/requests/${data.request.id}/responses` },
+		{ title: 'Questions & Answers', value: `/requests/${data.request.id}/questions` }
+	]}
+	bind:value={
+		() => page.url.pathname,
+		(value) => {
+			void goto(value);
+		}
+	}
+	class="flex flex-wrap gap-2"
+/>
 {@render children()}

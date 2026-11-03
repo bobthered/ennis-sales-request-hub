@@ -92,10 +92,11 @@
 	async function upload(event: SubmitEvent) {
 		event.preventDefault();
 		const form = event.currentTarget as HTMLFormElement;
+		const values = new FormData(form);
 		uploading = true;
 		try {
 			if (!(await autosave())) return;
-			const data = await send(new FormData(form));
+			const data = await send(values);
 			attachments = [...attachments, data];
 			status = 'File attached to draft';
 			form.reset();
@@ -123,6 +124,7 @@
 	<P>Your draft already exists. Changes and attachments are saved as you work</P>
 	{#if errorMessage}<P role="alert" class="text-red-700 dark:text-red-300">{errorMessage}</P>{/if}
 	<Form
+		id="request-details"
 		method="POST"
 		bind:element={detailsForm}
 		oninput={() => autosave()}
@@ -181,7 +183,6 @@
 				class="w-full"
 			/><P class="text-sm">One question per line. Name, branch, and pricing are included</P></Div
 		>
-		<Button type="submit" disabled={uploading || request.status === 'closed'}>Save request</Button>
 	</Form>
 	<Div class="space-y-3">
 		<H2>Shared attachments</H2>
@@ -211,4 +212,7 @@
 		</Form>
 	</Div>
 	<P role="status" aria-live="polite" class="text-sm">{status}</P>
+	<Button type="submit" form="request-details" disabled={uploading || request.status === 'closed'}
+		>Save request</Button
+	>
 </Card>

@@ -16,7 +16,7 @@ beforeAll(async () => {
 		{
 			windowsHide: true,
 			stdio: ['ignore', 'pipe', 'pipe'],
-			env: { ...process.env, MONGODB_URI: uri }
+			env: { ...process.env, MONGODB_URI: uri, MONGODB_DB_NAME: 'http-flow-tests' }
 		}
 	);
 	await new Promise<void>((resolve, reject) => {
@@ -109,6 +109,23 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	});
 	expect(finalSave.status).toBe(303);
 	expect((await records.findOne({ _id: new mongoose.Types.ObjectId(id) }))?.status).toBe('open');
+	const share = await fetch(`${origin}/requests/${id}?/share`, {
+		method: 'POST',
+		body: new URLSearchParams(),
+		headers: { Cookie: cookie, Origin: origin, Accept: 'application/json' }
+	});
+	expect(share.status).toBe(200);
+	const result = await share.json();
+	const token = result.data.match(/[a-f0-9]{64}/)[0];
+	const shared = await fetch(`${origin}/r/${token}`);
+	expect(shared.status).toBe(200);
+	expect(await shared.text()).toContain('Regional print job');
+	expect(await (await fetch(`${origin}/r/${token}/files/${file.key}`)).text()).toBe(
+		'print specifications'
+	);
+	expect((await fetch(`${origin}/r/${'a'.repeat(64)}`)).status).toBe(404);
+	const stored = await records.findOne({ _id: new mongoose.Types.ObjectId(id) });
+	expect(stored?.shareTokenHash).not.toBe(token);
 	const list = await fetch(`${origin}/requests`, { headers: { Cookie: cookie } });
 	expect(await list.text()).toContain('Regional print job');
 }, 90000);
