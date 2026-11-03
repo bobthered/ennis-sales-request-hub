@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { A, Button, Card, Div, H2, Input, Label, P, Textarea } from 'sveltewind/components';
+	import { Button, Card, Div, H2, Input, Label, P, Textarea } from 'sveltewind/components';
 </script>
 
 <svelte:head><title>Respond to request · Ennis</title></svelte:head>
@@ -43,4 +43,3 @@
 		>Submit response</Button
 	>
 </Card>
-<A href="/r/demo/edit/demo-edit">Preview editing your response →</A>

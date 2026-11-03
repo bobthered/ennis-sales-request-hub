@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
-import { demoRequest } from '#lib/demo.js';
+import type { RequestSummary } from '#lib/types/request.js';
 import type { LayoutLoad } from './$types';
-export const load: LayoutLoad = ({ params }) => {
-	if (params.requestId !== 'demo') error(404, 'Request not found');
-	return { request: demoRequest };
+export const load: LayoutLoad<{ request: RequestSummary }> = (): { request: RequestSummary } => {
+	// Real request loading will be added with creator ownership checks.
+	error(404, 'Request not found');
 };

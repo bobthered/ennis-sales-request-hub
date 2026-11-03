@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { A, Card, H2, P } from 'sveltewind/components';
+	import { Card, H2, P } from 'sveltewind/components';
 </script>
 
 <svelte:head><title>Submission confirmation preview · Ennis</title></svelte:head>
@@ -7,5 +7,5 @@
 	><H2>Submission confirmation preview</H2><P
 		>After submission, this page will confirm receipt and provide your personal edit link. No
 		response has been submitted in this preview.</P
-	><A href="/r/demo/edit/demo-edit">Preview personal edit link</A></Card
+	><P>Your personal edit link will appear here after submission.</P></Card
 >

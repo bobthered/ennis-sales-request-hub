@@ -1,9 +1,10 @@
 @import 'tailwindcss';
 @import 'sveltewind/themes/palettes.css';
 @source '../../node_modules/sveltewind/dist';
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @layer base {
 	body {
-		@apply bg-slate-50 text-slate-950 antialiased;
+		@apply bg-slate-50 text-slate-950 antialiased dark:bg-slate-950 dark:text-slate-50;
 	}
 }

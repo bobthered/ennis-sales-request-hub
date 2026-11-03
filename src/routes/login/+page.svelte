@@ -8,6 +8,6 @@
 		>Sign-in will let you create and manage your own requests. Recipients will use their emailed
 		link.</P
 	><P>Authentication is not connected yet.</P><A href="/requests" variants={['button.base']}
-		>Explore the sample workspace</A
+		>My Requests</A
 	></Card
 >

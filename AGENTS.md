@@ -6,7 +6,7 @@ Keep project work inside this directory.
 
 - SvelteKit 3, Svelte 5 runes, TypeScript, npm, and the Vercel adapter.
 - MongoDB via Mongoose. Keep models and database code in `src/lib/server`; use the Node runtime.
-- The user will provide the database connection script. Do not invent credentials or connect before it is supplied.
+- Database connection lives in `src/lib/server/db.ts`, using private `MONGODB_URI` from `.env` (or Vercel environment variables). Never invent or commit credentials. The server hook connects when configured; builds and unconfigured previews skip connection. Await `connectDatabase()` before model operations outside the hook-managed request lifecycle. Reuse the default Mongoose connection; do not disconnect after each request.
 
 ## Components
 
@@ -24,8 +24,15 @@ Keep project work inside this directory.
 - Participation is voluntary. No required invite list, participation tracking, or automatic reminders.
 - Shared attachments and Questions & Answers belong to requests. Recipients ask; only creators answer.
 - Before enabling writes, enforce ownership, visibility, edit tokens, and open/closed status on the server. Never expose private answers or edit tokens through public loaders.
-- Current routes are sample previews, not authenticated or persistent functionality. Keep this explicit until backend work is complete.
+- Current routes are scaffolds, not authenticated or persistent functionality. Sample requests are removed; do not reintroduce fixtures into user-facing request lists. Keep this explicit until backend work is complete.
 
 ## Validation
 
 Run `npm run check`, `npm run lint`, and `npm run build` after meaningful changes.
+
+## Commit suggestions
+
+- Before finishing a task, review the project's uncommitted changes, including staged, unstaged, and relevant untracked files, and provide a suggested commit message based on that review.
+- Every suggested commit message must start with exactly one of these prefixes: `fix: `, `feat: `, or `refactor: `.
+- Use `fix: ` for corrections, `feat: ` for new functionality, and `refactor: ` for restructuring or maintenance without a behavior change.
+- Keep the message concise and describe the actual changes. Suggest only; do not create a commit unless requested.
