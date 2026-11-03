@@ -41,6 +41,12 @@ const requestSchema = new Schema(
 
 requestSchema.index({ shareTokenHash: 1 }, { unique: true, sparse: true });
 export type SalesRequestDocument = InferSchemaType<typeof requestSchema>;
+// Hot reload may retain a model compiled before these fields existed.
+if (
+	models.SalesRequest &&
+	['quantities', 'pricingUom'].some((path) => !models.SalesRequest.schema.path(path))
+)
+	mongoose.deleteModel('SalesRequest');
 export const SalesRequest: Model<SalesRequestDocument> =
 	(models.SalesRequest as Model<SalesRequestDocument> | undefined) ??
 	model<SalesRequestDocument>('SalesRequest', requestSchema);

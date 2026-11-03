@@ -36,16 +36,12 @@
 			evenodd: false
 		}
 	];
-	const pathMarkup = paths
-		.map(
-			(path) =>
-				`<path d="${path.d}" fill="${path.fill}" fill-rule="${path.evenodd ? 'evenodd' : 'nonzero'}"/>`
-		)
-		.join('');
 	export const ennisFavicon =
 		'data:image/svg+xml,' +
 		encodeURIComponent(
-			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 652 652">' + pathMarkup + '</svg>'
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="125 150 340 340">' +
+				`<path d="${paths[0].d}" fill="#737373" fill-rule="evenodd"/>` +
+				'</svg>'
 		);
 </script>
 

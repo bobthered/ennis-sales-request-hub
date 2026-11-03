@@ -12,6 +12,11 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 	if (!r) error(404);
 	const rows = await RequestResponse.find({ requestId: r._id }).sort({ createdAt: -1 });
 	return {
-		responses: rows.map(responseView)
+		responses: rows.map((row) =>
+			responseView(
+				row,
+				r.questions.map((q) => q.label)
+			)
+		)
 	};
 };

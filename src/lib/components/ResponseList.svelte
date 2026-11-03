@@ -10,42 +10,61 @@
 		...restProps
 	}: ComponentProps<typeof Div> & {
 		responses: {
+			disposition: string;
 			name: string;
 			branch: string;
 			price: string;
 			prices: { quantity: number; price: string }[];
 			uom: string;
 			answers: Record<string, string>;
+			questionAnswers: { label: string; answer: string }[];
 		}[];
 	} = $props();
 	const quantities = $derived(
 		[...new Set(responses.flatMap((r) => r.prices.map((p) => p.quantity)))].sort((a, b) => a - b)
 	);
-	const legacy = $derived(responses.some((r) => !r.prices.length));
+	const legacy = $derived(responses.some((r) => r.disposition !== 'no-quote' && !r.prices.length));
+	const questionLabels = $derived([
+		...new Set(responses.flatMap((r) => r.questionAnswers.map((q) => q.label)))
+	]);
 	const classes = $derived(theme.resolve('responseList', variants, className));
 </script>
 
-<Div {theme} {...restProps} class={`${classes} overflow-x-auto`}>
-	{#if responses.length}<Table class="w-full text-sm"
+<Div
+	{theme}
+	{...restProps}
+	class={`${classes} max-w-full min-w-0 overflow-x-auto`}
+	tabindex={0}
+	role="region"
+	aria-label="Responses table"
+>
+	{#if responses.length}<Table class="w-max min-w-full text-sm"
 			><Thead
 				><Tr
-					><Th scope="col">Name</Th><Th scope="col">Branch</Th>{#each quantities as quantity}<Th
-							scope="col">Price ({quantity.toLocaleString('en-US')})</Th
+					><Th scope="col">Name</Th><Th scope="col">Branch</Th><Th scope="col">Response</Th
+					>{#each quantities as quantity}<Th scope="col"
+							>Price ({quantity.toLocaleString('en-US')})</Th
 						>{/each}{#if legacy}<Th scope="col">Price (USD)</Th>{/if}<Th scope="col">UOM</Th><Th
 						scope="col">Notes</Th
-					><Th scope="col">Additional answers</Th></Tr
+					>{#each questionLabels as label}<Th
+							scope="col"
+							class="max-w-xs min-w-48 break-words whitespace-normal">{label}</Th
+						>{/each}</Tr
 				></Thead
 			><Tbody
 				>{#each responses as response}<Tr
-						><Td>{response.name}</Td><Td>{response.branch}</Td>{#each quantities as quantity}<Td
+						><Td>{response.name}</Td><Td>{response.branch}</Td><Td
+							>{response.disposition === 'no-quote' ? 'No quote' : 'Quoted'}</Td
+						>{#each quantities as quantity}<Td
 								>{response.prices.find((p) => p.quantity === quantity)?.price ?? '-'}</Td
 							>{/each}{#if legacy}<Td>{response.prices.length ? '-' : response.price}</Td>{/if}<Td
 							>{response.uom}</Td
-						><Td>{response.answers.notes || '-'}</Td><Td
-							>{#each Object.entries(response.answers) as [label, answer]}{#if label !== 'notes' && answer}<P
-										>{label}: {answer}</P
-									>{/if}{/each}</Td
-						></Tr
+						><Td class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
+							>{response.answers.notes || '-'}</Td
+						>{#each questionLabels as label}<Td
+								class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
+								>{response.questionAnswers.find((q) => q.label === label)?.answer || '-'}</Td
+							>{/each}</Tr
 					>{/each}</Tbody
 			></Table
 		>{:else}<P>No responses yet.</P>{/if}</Div

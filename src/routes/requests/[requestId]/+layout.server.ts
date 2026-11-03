@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { connectDatabase } from '#lib/server/db.js';
 import { getOwner } from '#lib/server/owner.js';
 import { ownedRequest } from '#lib/server/requests.js';
+import { RequestResponse } from '#lib/server/models/response.js';
 import { SalesRequest } from '#lib/server/models/request.js';
 import type { LayoutServerLoad } from './$types';
 
@@ -13,6 +14,9 @@ export const load: LayoutServerLoad = async ({ cookies, params }) => {
 	return {
 		request: {
 			id: request.id,
+			canEditQuantities:
+				request.status === 'draft' ||
+				(request.status === 'open' && !(await RequestResponse.exists({ requestId: request._id }))),
 			quantities: request.quantities ?? [],
 			pricingUom: request.pricingUom || 'M',
 			title: request.title || '',

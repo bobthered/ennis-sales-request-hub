@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
+import { RequestResponse } from '../src/lib/server/models/response.js';
 import { SalesRequest } from '../src/lib/server/models/request.js';
 import { attachFile, parseDetails, saveRequest, startRequest } from '../src/lib/server/requests.js';
 
@@ -115,8 +116,45 @@ describe('MongoDB draft lifecycle', () => {
 		expect(() => parseDetails(form)).toThrow();
 		form.set('quantities', '10000');
 		await saveRequest(draft.id, 'alice', form, true);
+		await RequestResponse.create({
+			requestId: draft._id,
+			name: 'Jane',
+			branch: 'Dallas',
+			editTokenHash: 'quantity-lock',
+			pricingCents: 100
+		});
 		form.set('quantities', '20000');
 		await expect(saveRequest(draft.id, 'alice', form)).rejects.toMatchObject({ status: 404 });
+	});
+	it('publishes without project details and saves multiple optional questions', async () => {
+		const draft = await startRequest('alice');
+		const form = details('Questions job');
+		form.set('description', '');
+		form.append('questions', 'Lead time?');
+		form.append('questions', 'Can ship?');
+		const saved = await saveRequest(draft.id, 'alice', form, true);
+		expect(saved.description).toBe('');
+		expect(saved.questions.map((q) => q.label)).toEqual(['Lead time?', 'Can ship?']);
+		expect(saved.questions.every((q) => !q.required)).toBe(true);
+		form.set('questions', 'Changed?');
+		await expect(saveRequest(draft.id, 'alice', form)).rejects.toMatchObject({ status: 404 });
+	});
+	it('allows UOM changes after publishing and repair of missing quantities before responses', async () => {
+		const draft = await startRequest('alice');
+		const form = details('Editable UOM');
+		await saveRequest(draft.id, 'alice', form, true);
+		form.set('pricingUom', 'EA');
+		expect((await saveRequest(draft.id, 'alice', form)).pricingUom).toBe('EA');
+		const old = await SalesRequest.create({
+			creatorId: 'alice',
+			status: 'open',
+			title: 'Old request'
+		});
+		form.set('title', 'Old request');
+		const repaired = await saveRequest(old.id, 'alice', form, true);
+		expect(repaired.quantities).toEqual([10000]);
+		form.append('quantities', '25000');
+		expect((await saveRequest(old.id, 'alice', form)).quantities).toEqual([10000, 25000]);
 	});
 	it('rejects invalid input rather than accepting arbitrary request fields', () => {
 		const form = details('Project');

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { error } from '@sveltejs/kit';
+import { RequestResponse } from './models/response.js';
 import { SalesRequest } from './models/request.js';
 
 export function ownedRequest(id: string, creatorId: string | null) {
@@ -37,7 +38,7 @@ export function parseDetails(form: FormData, final = false) {
 	};
 	const title = read('title', 200),
 		description = read('description', 20000);
-	if (final && (!title || !description)) error(400, 'Enter a project title and project details');
+	if (final && !title) error(400, 'Enter a project title');
 	const visibility = read('visibility', 20);
 	if (visibility !== 'creator-only' && visibility !== 'shared') error(400, 'Invalid visibility');
 	const pricingUom = read('pricingUom', 2) || 'M';
@@ -67,10 +68,16 @@ export function parseDetails(form: FormData, final = false) {
 			new Date(date).toISOString().slice(0, 10) !== date)
 	)
 		error(400, 'Invalid due date');
-	const labels = read('questions', 10000)
-		.split('\n')
+	const rawQuestions = form.getAll('questions');
+	if (rawQuestions.length > 30 || rawQuestions.some((q) => typeof q !== 'string'))
+		error(400, 'Invalid questions');
+	const labels = (rawQuestions as string[])
+		.flatMap((q) => q.split('\n'))
 		.map((q) => q.trim())
 		.filter(Boolean);
+	if (labels.join('').length > 10000 || new Set(labels).size !== labels.length)
+		error(400, 'Questions must be unique and use at most 10,000 characters');
+
 	if (labels.length > 30 || labels.some((q) => q.length > 500))
 		error(400, 'Use up to 30 questions, with 500 characters each');
 	return {
@@ -85,16 +92,13 @@ export function parseDetails(form: FormData, final = false) {
 }
 
 export async function saveRequest(id: string, owner: string | null, form: FormData, final = false) {
-	const existing = final
-		? await SalesRequest.findOne(ownedRequest(id, owner)).select('status quantities')
-		: null;
-	const legacy =
-		existing?.status === 'open' &&
-		!existing.quantities.length &&
-		form.getAll('quantities').every((q) => q === '');
+	const existing = await SalesRequest.findOne(ownedRequest(id, owner)).select('status quantities');
+	const canEditPublishedQuantities =
+		existing?.status === 'open' && !(await RequestResponse.exists({ requestId: id }));
+
+	const legacy = existing?.status === 'open' && form.getAll('quantities').every((q) => q === '');
 	const fields = parseDetails(form, final && !legacy);
-	if (final && (!fields.title || !fields.description))
-		error(400, 'Enter a project title and project details');
+	if (final && !fields.title) error(400, 'Enter a project title');
 	const result = await SalesRequest.findOneAndUpdate(
 		{
 			...ownedRequest(id, owner),
@@ -103,22 +107,31 @@ export async function saveRequest(id: string, owner: string | null, form: FormDa
 				{
 					$or: [
 						{ status: 'draft' },
+						{
+							$expr: {
+								$eq: [
+									{ $map: { input: { $ifNull: ['$questions', []] }, as: 'q', in: '$$q.label' } },
+									{ $literal: fields.questions.map((q) => q.label) }
+								]
+							}
+						}
+					]
+				},
+				{
+					$or: [
+						{ status: 'draft' },
+						...(canEditPublishedQuantities ? [{}] : []),
 						{ quantities: fields.quantities },
-						{ quantities: { $exists: false } }
+						...(fields.quantities.length === 0 ? [{ quantities: { $exists: false } }] : [])
 					]
 				}
-			],
-			$or: [
-				{ status: 'draft' },
-				{ pricingUom: fields.pricingUom },
-				{ pricingUom: { $exists: false } }
 			]
 		},
 		{ $set: { ...fields, startedAt: new Date(), ...(final ? { status: 'open' } : {}) } },
 		{ returnDocument: 'after', runValidators: true }
 	);
 	if (!result)
-		error(404, 'Request unavailable, closed, or pricing unit/quantities changed after publishing');
+		error(404, 'Request unavailable, closed, or quantities/questions changed after publishing');
 	return result;
 }
 

@@ -4,6 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const responseSchema = new Schema(
 	{
+		disposition: { type: String, enum: ['quoted', 'no-quote'], default: 'quoted', required: true },
 		requestId: { type: Schema.Types.ObjectId, ref: 'SalesRequest', required: true, index: true },
 		name: { type: String, required: true, trim: true, maxlength: 200 },
 		branch: { type: String, required: true, trim: true, maxlength: 200 },
@@ -24,6 +25,12 @@ const responseSchema = new Schema(
 );
 
 export type RequestResponseDocument = InferSchemaType<typeof responseSchema>;
+// Hot reload may retain a model compiled before these fields existed.
+if (
+	models.RequestResponse &&
+	['quantityPrices', 'disposition'].some((path) => !models.RequestResponse.schema.path(path))
+)
+	mongoose.deleteModel('RequestResponse');
 export const RequestResponse: Model<RequestResponseDocument> =
 	(models.RequestResponse as Model<RequestResponseDocument> | undefined) ??
 	model<RequestResponseDocument>('RequestResponse', responseSchema);

@@ -4,13 +4,14 @@
 	let { data, form }: PageProps = $props();
 </script>
 
-<svelte:head><title>Request overview</title></svelte:head>
+<svelte:head></svelte:head>
 <Card class="space-y-4 bg-white p-6">
 	<H2>Project details</H2><P>{data.request.description || 'No project details yet'}</P>
 	<P
 		>Quantities: {data.request.quantities.map((q) => q.toLocaleString('en-US')).join(', ') ||
 			'Not specified'}</P
 	>
+	<P>Pricing UOM: {data.request.pricingUom}</P>
 	<P>Status: {data.request.status}</P>
 	<P
 		>{data.request.visibility === 'shared'
@@ -18,7 +19,8 @@
 			: 'Responses visible to you and each response owner'}</P
 	>
 	<P>{data.request.due ? `Due date: ${data.request.due}` : 'No due date set'}</P>
-	{#if data.request.questions}<P class="whitespace-pre-line">{data.request.questions}</P>{/if}
+	{#if data.request.questions}<H2>Additional questions</H2
+		>{#each data.request.questions.split('\n') as question}<P>{question}</P>{/each}{/if}
 </Card>
 <Card class="space-y-4 bg-white p-6"
 	><H2>Share this request</H2><P

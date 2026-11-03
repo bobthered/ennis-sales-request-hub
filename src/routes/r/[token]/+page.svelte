@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameInput from '#lib/components/NameInput.svelte';
 	import { A, Button, Card, Div, Form, H2, Input, Label, P, Textarea } from 'sveltewind/components';
 	import ResponseList from '#lib/components/ResponseList.svelte';
 	import type { PageProps } from './$types';
@@ -6,13 +7,17 @@
 	let { data, params, form }: PageProps = $props();
 </script>
 
-<svelte:head><title>Respond to request · Ennis</title></svelte:head>
+<svelte:head></svelte:head>
 <Card class="space-y-3 bg-white p-6"
 	><H2>Before you respond</H2><P
 		>Responding is optional. {data.request.visibility === 'shared'
 			? 'Responses will be visible to everyone with the link.'
 			: 'Only the creator and you will see your response.'}</P
-	><H2>Shared attachments</H2>
+	><H2>Requested quantities</H2><P
+		>{data.request.quantities.map((q) => q.toLocaleString('en-US')).join(', ') ||
+			'Not specified'}</P
+	><P>Pricing UOM: {data.request.pricingUom}</P>
+	<H2>Shared attachments</H2>
 	{#each data.request.attachments as file}<A href={`/r/${params.token}/files/${file.key}`} download
 			>{file.name}</A
 		>{:else}<P>No files attached.</P>{/each}
@@ -28,7 +33,7 @@
 		<Form method="POST" class="space-y-5"
 			><Input type="hidden" name="operation" value={data.own ? 'edit' : 'create'} />
 			<Div class="space-y-2"
-				><Label for="name">Your name</Label><Input
+				><Label for="name">Your name</Label><NameInput
 					id="name"
 					name="name"
 					value={data.own?.name ?? ''}
@@ -93,6 +98,13 @@
 						class="w-full"
 					/></Div
 				>{/each}
+			<Button
+				type="submit"
+				name="disposition"
+				value="no-quote"
+				formnovalidate
+				variants={['outline']}>No quote</Button
+			>
 			<Button type="submit">{data.own ? 'Save changes' : 'Submit response'}</Button></Form
 		>
 	{/if}</Card

@@ -1,6 +1,7 @@
 import type { RequestResponseDocument } from './models/response.js';
-export function responseView(row: RequestResponseDocument) {
+export function responseView(row: RequestResponseDocument, labels: string[] = []) {
 	return {
+		disposition: row.disposition || 'quoted',
 		name: row.name,
 		branch: row.branch,
 		price: row.pricingCents == null ? '' : (row.pricingCents / 100).toFixed(2),
@@ -9,6 +10,12 @@ export function responseView(row: RequestResponseDocument) {
 			price: (p.cents / 100).toFixed(2)
 		})),
 		uom: row.pricingUom,
-		answers: Object.fromEntries(row.answers ?? [])
+		answers: Object.fromEntries(row.answers ?? []),
+		questionAnswers: Array.from(row.answers ?? [])
+			.filter(([key]) => key !== 'notes')
+			.map(([key, answer]) => ({
+				label: /^Question \d+$/.test(key) ? labels[Number(key.split(' ')[1]) - 1] || key : key,
+				answer
+			}))
 	};
 }

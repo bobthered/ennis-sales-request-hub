@@ -4,7 +4,7 @@
 	let { data, form }: PageProps = $props();
 </script>
 
-<svelte:head><title>Questions & Answers</title></svelte:head><QuestionsAnswers
+<svelte:head></svelte:head><QuestionsAnswers
 	questions={data.questions}
 	message={form?.message}
 	creator

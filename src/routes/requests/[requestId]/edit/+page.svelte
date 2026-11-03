@@ -4,5 +4,5 @@
 	let { data, form }: PageProps = $props();
 </script>
 
-<svelte:head><title>Edit request</title></svelte:head>
+<svelte:head></svelte:head>
 {#key data.request.id}<RequestEditor request={data.request} errorMessage={form?.message} />{/key}

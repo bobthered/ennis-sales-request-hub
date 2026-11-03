@@ -1,3 +1,4 @@
+import { responseView } from '#lib/server/response-view.js';
 import { createHmac } from 'node:crypto';
 import { connectDatabase } from '#lib/server/db.js';
 import { hashToken } from '#lib/server/sharing.js';
@@ -23,6 +24,12 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			const token = createHmac('sha256', request.creatorId).update(request.id).digest('hex');
 			return [
 				{
+					questionAnswers: responseView(
+						row,
+						request.questions.map((q) => q.label)
+					).questionAnswers,
+					notes: row.answers?.get('notes') || '',
+					disposition: row.disposition || 'quoted',
 					id: row.id,
 					prices: (row.quantityPrices ?? []).map((p) => ({
 						quantity: p.quantity,
@@ -31,11 +38,16 @@ export const load: PageServerLoad = async ({ cookies }) => {
 					title: request.title,
 					name: row.name,
 					branch: row.branch,
-					price: row.quantityPrices?.length
-						? row.quantityPrices
-								.map((p) => `${p.quantity.toLocaleString('en-US')}: ${(p.cents / 100).toFixed(2)}`)
-								.join(' / ')
-						: ((row.pricingCents ?? 0) / 100).toFixed(2),
+					price:
+						row.disposition === 'no-quote'
+							? ''
+							: row.quantityPrices?.length
+								? row.quantityPrices
+										.map(
+											(p) => `${p.quantity.toLocaleString('en-US')}: ${(p.cents / 100).toFixed(2)}`
+										)
+										.join(' / ')
+								: ((row.pricingCents ?? 0) / 100).toFixed(2),
 					uom: row.pricingUom,
 					status: request.status,
 					href:

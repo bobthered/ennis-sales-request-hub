@@ -27,8 +27,18 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 				: null;
 	const rows = filter ? await RequestResponse.find(filter).sort({ createdAt: -1 }) : [];
 	return {
-		own: own ? responseView(own) : null,
-		responses: rows.map(responseView)
+		own: own
+			? responseView(
+					own,
+					r.questions.map((q) => q.label)
+				)
+			: null,
+		responses: rows.map((row) =>
+			responseView(
+				row,
+				r.questions.map((q) => q.label)
+			)
+		)
 	};
 };
 export const actions = {
@@ -55,6 +65,24 @@ export const actions = {
 					throw new Error('Enter your name, branch, and valid pricing');
 				return text;
 			};
+			const noQuote = form.get('disposition') === 'no-quote';
+			if (noQuote) {
+				await RequestResponse.findOneAndUpdate(
+					{ requestId: r._id, editTokenHash: hashToken(identity) },
+					{
+						$set: {
+							disposition: 'no-quote',
+							pricingUom: r.pricingUom || 'M',
+							name: read('name', 200) || existing?.name || 'Recipient',
+							branch: read('branch', 200) || existing?.branch || 'Not provided',
+							quantityPrices: []
+						},
+						$unset: { pricingCents: 1 }
+					},
+					{ upsert: true, runValidators: true }
+				);
+				return { success: true };
+			}
 			const name = read('name', 200, true),
 				branch = read('branch', 200, true);
 			const money = (key: string) => {
@@ -73,13 +101,14 @@ export const actions = {
 
 			const answers: Record<string, string> = { notes: read('notes', 20000) };
 			for (let i = 0; i < r.questions.length; i++)
-				answers[`Question ${i + 1}`] = read(`question-${i}`, 20000, r.questions[i].required);
+				answers[`Question ${i + 1}`] = read(`question-${i}`, 20000, false);
 			const key = `response-${r.id}`;
 			const token = cookies.get(key) || randomBytes(32).toString('hex');
 			await RequestResponse.findOneAndUpdate(
 				{ requestId: r._id, editTokenHash: hashToken(token) },
 				{
 					$set: {
+						disposition: 'quoted',
 						name,
 						branch,
 						quantityPrices,

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import './layout.css';
 	import '#lib/theme.js';
+	import { page } from '$app/state';
+	import { pageTitle } from '#lib/page-title.js';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { subtleReveal } from 'sveltewind/transitions';
@@ -14,9 +16,9 @@
 		Form,
 		Header,
 		Label,
+		Input,
 		Main,
 		Option,
-		P,
 		Popover,
 		Select,
 		Span
@@ -25,9 +27,28 @@
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+	const title = $derived(
+		pageTitle(
+			page.url.pathname,
+			page.params,
+			(page.data as { request?: { title?: string } }).request?.title
+		)
+	);
+	let outsideDown = false;
 	let menuOpen = $state(false);
+	let yourName = $state('');
+	function saveName(value: string) {
+		yourName = value;
+		try {
+			localStorage.setItem('ennis-name', value);
+		} catch {}
+		window.dispatchEvent(new Event('ennis-name-changed'));
+	}
 	let preference = $state('os');
 	onMount(() => {
+		try {
+			yourName = localStorage.getItem('ennis-name') || '';
+		} catch {}
 		const sync = () => {
 			preference = document.documentElement.dataset.themePreference ?? 'os';
 		};
@@ -38,6 +59,7 @@
 </script>
 
 <svelte:head>
+	<title>{title}</title>
 	<link rel="icon" href={ennisFavicon} />
 </svelte:head>
 
@@ -87,6 +109,14 @@
 						variants={['ghost', 'icon']}><Settings aria-hidden="true" class="size-5" /></Button
 					>
 				{/snippet}
+				<Label for="your-name">Your Name</Label><Input
+					id="your-name"
+					value={yourName}
+					maxlength={200}
+					autocomplete="name"
+					class="w-full"
+					oninput={(event) => saveName(event.currentTarget.value)}
+				/>
 				<Label for="theme-preference">Appearance</Label>
 				<Select
 					id="theme-preference"
@@ -101,7 +131,6 @@
 						>OS</Option
 					>
 				</Select>
-				<P class="text-sm">OS follows your device’s appearance.</P>
 			</Popover>
 		</Div>
 	</Div>
@@ -109,6 +138,26 @@
 <Drawer
 	bind:isVisible={menuOpen}
 	title="Navigation"
+	onpointerdown={(event) => {
+		const r = event.currentTarget.getBoundingClientRect();
+		outsideDown =
+			event.clientX < r.left ||
+			event.clientX > r.right ||
+			event.clientY < r.top ||
+			event.clientY > r.bottom;
+	}}
+	onclick={(event) => {
+		const r = event.currentTarget.getBoundingClientRect();
+		if (
+			outsideDown &&
+			(event.clientX < r.left ||
+				event.clientX > r.right ||
+				event.clientY < r.top ||
+				event.clientY > r.bottom)
+		)
+			menuOpen = false;
+		outsideDown = false;
+	}}
 	position="right"
 	transition={[fly, { x: 320, duration: 220 }]}
 	class="w-80 max-w-[90vw]"
@@ -139,7 +188,15 @@
 		></Div
 	>
 	<Div class="mt-6 space-y-3 border-t border-neutral-200 pt-6 dark:border-neutral-800"
-		><Label for="mobile-appearance">Appearance</Label><Select
+		><Label for="mobile-your-name">Your Name</Label><Input
+			id="mobile-your-name"
+			value={yourName}
+			maxlength={200}
+			autocomplete="name"
+			class="w-full"
+			oninput={(event) => saveName(event.currentTarget.value)}
+		/>
+		<Label for="mobile-appearance">Appearance</Label><Select
 			id="mobile-appearance"
 			class="w-full"
 			value={preference}
@@ -153,6 +210,6 @@
 		></Div
 	>
 </Drawer>
-<Main id="main" class="mx-auto w-full max-w-6xl space-y-8 px-6 py-10 sm:py-14">
+<Main id="main" class="mx-auto w-full max-w-6xl min-w-0 space-y-8 px-6 py-10 sm:py-14">
 	{@render children()}
 </Main>

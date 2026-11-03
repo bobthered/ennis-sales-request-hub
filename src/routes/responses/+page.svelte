@@ -7,20 +7,31 @@
 			(a, b) => a - b
 		)
 	);
-	const legacy = $derived(data.responses.some((r) => !r.prices.length));
+	const questionLabels = $derived([
+		...new Set(data.responses.flatMap((r) => r.questionAnswers.map((q) => q.label)))
+	]);
+	const legacy = $derived(
+		data.responses.some((r) => r.disposition !== 'no-quote' && !r.prices.length)
+	);
 </script>
 
-<svelte:head><title>My Responses ? Ennis</title></svelte:head><H1>My Responses</H1><P
+<svelte:head></svelte:head><H1>My Responses</H1><P
 	>Responses submitted in this browser. Open a request to review or edit your response.</P
 >
-{#if data.responses.length}<Div class="overflow-x-auto"
-		><Table class="w-full text-sm"
+{#if data.responses.length}<Div
+		class="max-w-full min-w-0 overflow-x-auto"
+		tabindex={0}
+		role="region"
+		aria-label="Scrollable table"
+		><Table class="w-max min-w-full text-sm"
 			><Thead
 				><Tr
 					><Th>Request</Th><Th>Branch</Th>{#each quantities as quantity}<Th
 							>Price ({quantity.toLocaleString('en-US')})</Th
-						>{/each}{#if legacy}<Th>Price (USD)</Th>{/if}<Th>UOM</Th><Th>Status</Th><Th>Action</Th
-					></Tr
+						>{/each}{#if legacy}<Th>Price (USD)</Th>{/if}<Th>UOM</Th><Th>Notes</Th
+					>{#each questionLabels as label}<Th
+							class="max-w-xs min-w-48 break-words whitespace-normal">{label}</Th
+						>{/each}<Th>Status</Th><Th>Action</Th></Tr
 				></Thead
 			><Tbody
 				>{#each data.responses as row}<Tr
@@ -28,7 +39,11 @@
 								>{row.prices.find((p) => p.quantity === quantity)?.price ?? '-'}</Td
 							>{/each}{#if legacy}<Td>{row.prices.length ? '-' : row.price}</Td>{/if}<Td
 							>{row.uom}</Td
-						><Td>{row.status}</Td><Td
+						><Td class="max-w-xs min-w-48 break-words whitespace-pre-wrap">{row.notes || '-'}</Td
+						>{#each questionLabels as label}<Td
+								class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
+								>{row.questionAnswers.find((q) => q.label === label)?.answer || '-'}</Td
+							>{/each}<Td>{row.disposition === 'no-quote' ? 'No quote' : row.status}</Td><Td
 							>{#if row.href}<A href={row.href}>View / edit response</A>{:else}<P
 									>Link unavailable</P
 								>{/if}</Td

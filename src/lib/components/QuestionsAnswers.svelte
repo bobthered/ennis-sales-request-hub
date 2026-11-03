@@ -45,15 +45,21 @@
 	>
 	<P>Questions and the request creator's answers are visible to everyone with the request link.</P>
 	{#if message}<P role="alert">{message}</P>{/if}
-	<Div class="overflow-x-auto"
-		><Table class="w-full text-sm"
+	<Div
+		class="max-w-full min-w-0 overflow-x-auto"
+		tabindex={0}
+		role="region"
+		aria-label="Scrollable table"
+		><Table class="w-max min-w-full text-sm"
 			><Thead
 				><Tr
 					><Th scope="col">Asked by</Th><Th scope="col">Question</Th><Th scope="col">Answer</Th></Tr
 				></Thead
 			><Tbody>
 				{#each questions as question}<Tr
-						><Td>{question.askedBy}</Td><Td class="whitespace-pre-wrap">{question.question}</Td><Td
+						><Td>{question.askedBy}</Td><Td class="max-w-md break-words whitespace-pre-wrap"
+							>{question.question}</Td
+						><Td
 							>{#if creator}<Form
 									method="POST"
 									class="flex min-w-64 flex-row flex-nowrap items-center gap-2 space-y-0"
@@ -68,7 +74,8 @@
 										class="min-w-0 flex-1"
 									/><Button type="submit" class="shrink-0">Save</Button></Form
 								>
-							{:else}<P class="whitespace-pre-wrap">{question.answer || 'Awaiting an answer'}</P
+							{:else}<P class="max-w-md break-words whitespace-pre-wrap"
+									>{question.answer || 'Awaiting an answer'}</P
 								>{/if}</Td
 						></Tr
 					>{:else}<Tr><Td colspan={3}>No questions yet.</Td></Tr>{/each}

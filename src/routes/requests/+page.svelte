@@ -4,7 +4,7 @@
 	let { data }: PageProps = $props();
 </script>
 
-<svelte:head><title>My Requests</title></svelte:head>
+<svelte:head></svelte:head>
 <Div class="flex flex-wrap items-start justify-between gap-5">
 	<Div class="space-y-2"><H1>My Requests</H1><P>Requests created in this browser</P></Div>
 	<Form method="POST" action="/requests/new"><Button type="submit">Create a request</Button></Form>

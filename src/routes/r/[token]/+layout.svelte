@@ -14,6 +14,7 @@
 	>
 	<Tabs
 		aria-label="Recipient sections"
+		class="gap-0 space-x-0"
 		tabs={[
 			{ title: 'Your response', value: `/r/${params.token}` },
 			{ title: 'Questions & Answers', value: `/r/${params.token}/questions` }

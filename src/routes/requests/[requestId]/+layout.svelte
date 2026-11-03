@@ -25,6 +25,6 @@
 			void goto(value);
 		}
 	}
-	class="flex flex-wrap gap-2"
+	class="flex flex-wrap gap-0"
 />
 {@render children()}

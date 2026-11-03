@@ -5,6 +5,4 @@
 	let { data }: PageProps = $props();
 </script>
 
-<svelte:head><title>Responses ? Ennis</title></svelte:head><H2>Responses</H2><ResponseList
-	responses={data.responses}
-/>
+<svelte:head></svelte:head><H2>Responses</H2><ResponseList responses={data.responses} />

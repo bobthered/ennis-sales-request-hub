@@ -20,6 +20,7 @@
 	type Attachment = { name: string; key: string; size: number };
 	type Draft = {
 		quantities: number[];
+		canEditQuantities: boolean;
 		pricingUom: string;
 		id: string;
 		title: string;
@@ -51,6 +52,15 @@
 	async function changeQuantityRows(index?: number) {
 		if (index === undefined) quantities = [...quantities, ''];
 		else quantities = quantities.filter((_, i) => i !== index);
+		await tick();
+		void autosave();
+	}
+	let questions = $state<string[]>(
+		untrack(() => (request.questions ? request.questions.split('\n') : []))
+	);
+	async function changeQuestionRows(index?: number) {
+		if (index === undefined) questions = [...questions, ''];
+		else questions = questions.filter((_, i) => i !== index);
 		await tick();
 		void autosave();
 	}
@@ -156,20 +166,20 @@
 			/></Div
 		>
 		<Div class="space-y-2"
-			><Label for="description">Project details</Label><Textarea
+			><Label for="description">Project details (optional)</Label><Textarea
 				id="description"
 				name="description"
 				value={request.description}
-				required
 				maxlength={20000}
 				rows={4}
 				class="w-full"
 			/></Div
 		>
-		{#if request.status === 'draft' || request.quantities.length}<Div class="space-y-3"
+		{#if request.canEditQuantities || request.quantities.length}<Div
+				class="space-y-3 rounded-md border border-neutral-200 bg-transparent p-4 dark:border-neutral-800"
 				><H2>Quantities</H2><P class="text-sm"
 					>Add at least one quantity. Responders price each quantity using the selected UOM.
-					Quantities are fixed when published.</P
+					Quantities can be edited until the first response arrives.</P
 				>
 				{#each quantities as quantity, i}<Div class="flex items-center gap-2"
 						><Label for={`quantity-${i}`}>Quantity {i + 1}</Label><Input
@@ -180,9 +190,9 @@
 							step="1"
 							required
 							bind:value={quantities[i]}
-							disabled={request.status !== 'draft'}
+							disabled={!request.canEditQuantities}
 							class="min-w-0 flex-1"
-						/>{#if request.status !== 'draft'}<Input
+						/>{#if !request.canEditQuantities}<Input
 								type="hidden"
 								name="quantities"
 								value={quantity}
@@ -192,7 +202,7 @@
 								onclick={() => changeQuantityRows(i)}>Remove</Button
 							>{/if}</Div
 					>{/each}
-				{#if request.status === 'draft'}<Button
+				{#if request.canEditQuantities}<Button
 						type="button"
 						variants={['outline']}
 						disabled={quantities.length >= 20}
@@ -204,15 +214,15 @@
 				id="pricingUom"
 				name="pricingUom"
 				value={request.pricingUom}
-				disabled={request.status !== 'draft'}
+				disabled={request.status === 'closed'}
 				class="w-full"
 				>{#each pricingUnits as unit}<Option value={unit.value}>{unit.label}</Option>{/each}</Select
-			>{#if request.status !== 'draft'}<Input
+			>{#if request.status === 'closed'}<Input
 					type="hidden"
 					name="pricingUom"
 					value={request.pricingUom}
 				/>{/if}<P class="text-sm"
-				>All responses use this unit. It is fixed when you save the request.</P
+				>New or revised quotes use this unit. Existing quotes keep their recorded unit.</P
 			></Div
 		>
 		<Div class="space-y-2"
@@ -235,16 +245,36 @@
 				></Select
 			></Div
 		>
-		<Div class="space-y-2"
-			><Label for="questions">Additional questions</Label><Textarea
-				id="questions"
-				name="questions"
-				value={request.questions}
-				rows={3}
-				maxlength={10000}
-				class="w-full"
-			/><P class="text-sm">One question per line. Name, branch, and pricing are included</P></Div
-		>
+		<Div
+			class="space-y-3 rounded-md border border-neutral-200 bg-transparent p-4 dark:border-neutral-800"
+			><H2>Additional questions</H2><P class="text-sm"
+				>Add questions for responders. Every answer is optional. Questions are fixed when published.</P
+			>
+			{#each questions as question, i}<Div class="flex items-center gap-2"
+					><Label for={`question-${i}`}>Question {i + 1}</Label><Input
+						id={`question-${i}`}
+						name="questions"
+						bind:value={questions[i]}
+						maxlength={500}
+						disabled={request.status !== 'draft'}
+						class="min-w-0 flex-1"
+					/>{#if request.status !== 'draft'}<Input
+							type="hidden"
+							name="questions"
+							value={question}
+						/>{:else}<Button
+							type="button"
+							variants={['danger']}
+							onclick={() => changeQuestionRows(i)}>Remove</Button
+						>{/if}</Div
+				>{/each}
+			{#if request.status === 'draft'}<Button
+					type="button"
+					variants={['outline']}
+					disabled={questions.length >= 30}
+					onclick={() => changeQuestionRows()}>Add question</Button
+				>{/if}
+		</Div>
 	</Form>
 	<Div class="space-y-3">
 		<H2>Shared attachments</H2>

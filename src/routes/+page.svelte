@@ -6,7 +6,7 @@
 	const drafts = $derived(data.requests.filter((r) => r.status === 'draft'));
 </script>
 
-<svelte:head><title>Dashboard ? Ennis</title></svelte:head>
+<svelte:head></svelte:head>
 <Div class="flex flex-wrap items-center justify-between gap-4"
 	><Div><H1>Your sales requests</H1><P>Pick up a draft or review an open request.</P></Div><Form
 		method="POST"

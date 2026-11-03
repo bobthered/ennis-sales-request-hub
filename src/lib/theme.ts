@@ -43,3 +43,13 @@ theme.set.variant(
 	'danger',
 	'bg-red-600 text-white hover:bg-red-700 focus:bg-red-700 hover:text-white focus:text-white dark:bg-red-600 dark:text-white dark:hover:bg-red-700 dark:focus:bg-red-700 dark:hover:text-white dark:focus:text-white'
 );
+
+theme.update.variant(
+	'button',
+	'ghost',
+	'hover:bg-neutral-100 focus:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800'
+);
+
+theme.set.component('nameInput', { base: '' });
+
+theme.update.base('tabs', 'gap-0 space-x-0');

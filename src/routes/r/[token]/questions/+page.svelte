@@ -4,7 +4,7 @@
 	let { data, params }: PageProps = $props();
 </script>
 
-<svelte:head><title>Questions & Answers</title></svelte:head><QuestionsAnswers
+<svelte:head></svelte:head><QuestionsAnswers
 	questions={data.questions}
 	askHref={`/r/${params.token}/questions/new`}
 />

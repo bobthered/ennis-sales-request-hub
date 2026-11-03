@@ -77,7 +77,9 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect((await fetch(origin + editPath)).status).toBe(404);
 	const values = new FormData();
 	values.set('title', 'Regional print job');
-	values.set('description', 'Brochure specifications');
+	values.set('description', '');
+	values.append('questions', 'Lead time?');
+	values.append('questions', 'Can ship?');
 	values.set('visibility', 'shared');
 	values.append('quantities', '10000');
 	values.append('quantities', '25000');
@@ -125,7 +127,10 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	const token = result.data.match(/[a-f0-9]{64}/)[0];
 	const shared = await fetch(`${origin}/r/${token}`);
 	expect(shared.status).toBe(200);
-	expect(await shared.text()).toContain('Regional print job');
+	const sharedHtml = await shared.text();
+	expect(sharedHtml).toContain('Regional print job');
+	expect(sharedHtml).toContain('Price (10,000)');
+	expect(sharedHtml).toContain('Price (25,000)');
 	expect(await (await fetch(`${origin}/r/${token}/files/${file.key}`)).text()).toBe(
 		'print specifications'
 	);
@@ -148,6 +153,7 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 			branch: 'Dallas',
 			'price-10000': '125.50',
 			'price-25000': '110.00',
+			'question-0': 'Two weeks',
 			pricingUom: 'PK',
 			notes: 'Ready'
 		}),
@@ -166,6 +172,7 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 			branch: 'Dallas',
 			'price-10000': '130.00',
 			'price-25000': '115.00',
+			'question-0': 'Three weeks',
 			operation: 'edit'
 		}),
 		headers: { Origin: origin, Accept: 'application/json', Cookie: responseCookie }
@@ -179,6 +186,9 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect(responseHtml).toContain('130.00');
 	expect(responseHtml).toContain('Price (10,000)');
 	expect(responseHtml).toContain('115.00');
+	expect(responseHtml).toContain('Lead time?');
+	expect(responseHtml).toContain('Can ship?');
+	expect(responseHtml).toContain('Three weeks');
 	const duplicate = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
 		body: new URLSearchParams({ name: 'Jane', branch: 'Dallas', price: '99' }),
@@ -207,6 +217,33 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect(await mine.text()).toContain('130.00');
 	const other = await fetch(`${origin}/responses`);
 	expect(await other.text()).not.toContain('130.00');
+	values.set('pricingUom', 'EA');
+	const changeUom = await fetch(`${origin}/api/requests/${id}`, {
+		method: 'POST',
+		body: values,
+		headers: { Cookie: cookie, Origin: origin }
+	});
+	expect(changeUom.status).toBe(200);
+	expect(
+		(await submissions.findOne({ requestId: new mongoose.Types.ObjectId(id) }))?.pricingUom
+	).toBe('M');
+	expect(
+		await (await fetch(`${origin}/r/${token}`, { headers: { Cookie: responseCookie } })).text()
+	).toContain('EA');
+	const noQuotePage = await fetch(`${origin}/r/${token}`);
+	const noQuoteCookie = noQuotePage.headers.get('set-cookie')!.split(';')[0];
+	const noQuote = await fetch(`${origin}/r/${token}`, {
+		method: 'POST',
+		body: new URLSearchParams({ disposition: 'no-quote' }),
+		headers: { Cookie: noQuoteCookie, Origin: origin, Accept: 'application/json' }
+	});
+	expect(noQuote.status).toBe(200);
+	expect(await submissions.countDocuments({ disposition: 'no-quote' })).toBe(1);
+	expect(
+		await (
+			await fetch(`${origin}/requests/${id}/responses`, { headers: { Cookie: cookie } })
+		).text()
+	).toContain('No quote');
 	const overview = await fetch(`${origin}/requests/${id}`, { headers: { Cookie: cookie } });
 	expect(await overview.text()).toContain(`/r/${token}`);
 	const dashboard = await fetch(origin, { headers: { Cookie: cookie } });
