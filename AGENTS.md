@@ -15,6 +15,7 @@ Keep project work inside this directory.
 - Read https://sveltewind.com/getting-started/usage, https://sveltewind.com/getting-started/theming and installed component source before creating custom components.
 - Shared theme: `src/lib/theme.ts`. Tailwind source directive and palette CSS: `src/routes/layout.css`.
 - Use clear labels, large controls, and a simple recipient experience.
+- Cards must have visible background contrast with their surrounding surface in both light and dark modes. Default to white cards on neutral-50 pages and neutral-900 cards on neutral-950 pages; adjust nested cards when their parent uses the same surface. Keep borders subtle and verify both themes.
 
 ## Product rules
 
