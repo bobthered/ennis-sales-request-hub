@@ -18,6 +18,7 @@ const responseSchema = new Schema(
 		pricingCents: { type: Number, min: 0, validate: Number.isSafeInteger },
 		pricingUom: { type: String, enum: ['M', 'EA', 'CA', 'RL', 'PK'], default: 'M', required: true },
 		currency: { type: String, default: 'USD' },
+		questionLabels: [String],
 		answers: { type: Map, of: String },
 		editTokenHash: { type: String, required: true, unique: true, select: false }
 	},
@@ -28,7 +29,9 @@ export type RequestResponseDocument = InferSchemaType<typeof responseSchema>;
 // Hot reload may retain a model compiled before these fields existed.
 if (
 	models.RequestResponse &&
-	['quantityPrices', 'disposition'].some((path) => !models.RequestResponse.schema.path(path))
+	['quantityPrices', 'disposition', 'questionLabels'].some(
+		(path) => !models.RequestResponse.schema.path(path)
+	)
 )
 	mongoose.deleteModel('RequestResponse');
 export const RequestResponse: Model<RequestResponseDocument> =

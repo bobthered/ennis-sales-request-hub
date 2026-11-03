@@ -1,3 +1,4 @@
+import { responseView } from '../src/lib/server/response-view.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
@@ -137,7 +138,30 @@ describe('MongoDB draft lifecycle', () => {
 		expect(saved.questions.map((q) => q.label)).toEqual(['Lead time?', 'Can ship?']);
 		expect(saved.questions.every((q) => !q.required)).toBe(true);
 		form.set('questions', 'Changed?');
-		await expect(saveRequest(draft.id, 'alice', form)).rejects.toMatchObject({ status: 404 });
+		expect((await saveRequest(draft.id, 'alice', form)).questions[0].label).toBe('Changed?');
+	});
+	it('preserves the original question labels on existing answers after edits', async () => {
+		const draft = await startRequest('alice');
+		const form = details('Editable questions');
+		form.append('questions', 'Lead time?');
+		form.append('questions', 'Can ship?');
+		await saveRequest(draft.id, 'alice', form, true);
+		const reply = await RequestResponse.create({
+			requestId: draft._id,
+			name: 'Jane',
+			branch: 'Dallas',
+			editTokenHash: 'question-snapshot',
+			answers: { 'Question 1': 'Two weeks', 'Question 2': 'Yes' }
+		});
+		form.delete('questions');
+		form.append('questions', 'Can ship?');
+		form.append('questions', 'Updated lead time?');
+		await saveRequest(draft.id, 'alice', form);
+		const stored = await RequestResponse.findById(reply.id);
+		expect(responseView(stored!, ['Can ship?', 'Updated lead time?']).questionAnswers).toEqual([
+			{ label: 'Lead time?', answer: 'Two weeks' },
+			{ label: 'Can ship?', answer: 'Yes' }
+		]);
 	});
 	it('allows UOM changes after publishing and repair of missing quantities before responses', async () => {
 		const draft = await startRequest('alice');

@@ -1,5 +1,6 @@
 import type { RequestResponseDocument } from './models/response.js';
 export function responseView(row: RequestResponseDocument, labels: string[] = []) {
+	const savedLabels = row.questionLabels?.length ? row.questionLabels : labels;
 	return {
 		disposition: row.disposition || 'quoted',
 		name: row.name,
@@ -14,7 +15,7 @@ export function responseView(row: RequestResponseDocument, labels: string[] = []
 		questionAnswers: Array.from(row.answers ?? [])
 			.filter(([key]) => key !== 'notes')
 			.map(([key, answer]) => ({
-				label: /^Question \d+$/.test(key) ? labels[Number(key.split(' ')[1]) - 1] || key : key,
+				label: /^Question \d+$/.test(key) ? savedLabels[Number(key.split(' ')[1]) - 1] || key : key,
 				answer
 			}))
 	};

@@ -92,31 +92,33 @@ export function parseDetails(form: FormData, final = false) {
 }
 
 export async function saveRequest(id: string, owner: string | null, form: FormData, final = false) {
-	const existing = await SalesRequest.findOne(ownedRequest(id, owner)).select('status quantities');
+	const existing = await SalesRequest.findOne(ownedRequest(id, owner)).select(
+		'status quantities questions'
+	);
 	const canEditPublishedQuantities =
 		existing?.status === 'open' && !(await RequestResponse.exists({ requestId: id }));
 
-	const legacy = existing?.status === 'open' && form.getAll('quantities').every((q) => q === '');
+	const legacy =
+		existing?.status === 'open' &&
+		!existing.quantities.length &&
+		form.getAll('quantities').every((q) => q === '');
 	const fields = parseDetails(form, final && !legacy);
 	if (final && !fields.title) error(400, 'Enter a project title');
+	// Snapshot the original labels before a requester edits or removes questions.
+	if (existing && existing.status !== 'closed')
+		await RequestResponse.updateMany(
+			{
+				requestId: id,
+				$or: [{ questionLabels: { $exists: false } }, { questionLabels: { $size: 0 } }]
+			},
+			{ $set: { questionLabels: existing.questions.map((q) => q.label) } }
+		);
+
 	const result = await SalesRequest.findOneAndUpdate(
 		{
 			...ownedRequest(id, owner),
 			status: { $ne: 'closed' },
 			$and: [
-				{
-					$or: [
-						{ status: 'draft' },
-						{
-							$expr: {
-								$eq: [
-									{ $map: { input: { $ifNull: ['$questions', []] }, as: 'q', in: '$$q.label' } },
-									{ $literal: fields.questions.map((q) => q.label) }
-								]
-							}
-						}
-					]
-				},
 				{
 					$or: [
 						{ status: 'draft' },
@@ -131,7 +133,7 @@ export async function saveRequest(id: string, owner: string | null, form: FormDa
 		{ returnDocument: 'after', runValidators: true }
 	);
 	if (!result)
-		error(404, 'Request unavailable, closed, or quantities/questions changed after publishing');
+		error(404, 'Request unavailable, closed, or quantities changed after responses arrived');
 	return result;
 }
 

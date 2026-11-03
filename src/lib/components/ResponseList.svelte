@@ -44,12 +44,11 @@
 					><Th scope="col">Name</Th><Th scope="col">Branch</Th><Th scope="col">Response</Th
 					>{#each quantities as quantity}<Th scope="col"
 							>Price ({quantity.toLocaleString('en-US')})</Th
-						>{/each}{#if legacy}<Th scope="col">Price (USD)</Th>{/if}<Th scope="col">UOM</Th><Th
-						scope="col">Notes</Th
+						>{/each}{#if legacy}<Th scope="col">Price (USD)</Th>{/if}<Th scope="col">UOM</Th
 					>{#each questionLabels as label}<Th
 							scope="col"
 							class="max-w-xs min-w-48 break-words whitespace-normal">{label}</Th
-						>{/each}</Tr
+						>{/each}<Th scope="col">Notes</Th></Tr
 				></Thead
 			><Tbody
 				>{#each responses as response}<Tr
@@ -59,12 +58,12 @@
 								>{response.prices.find((p) => p.quantity === quantity)?.price ?? '-'}</Td
 							>{/each}{#if legacy}<Td>{response.prices.length ? '-' : response.price}</Td>{/if}<Td
 							>{response.uom}</Td
-						><Td class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
-							>{response.answers.notes || '-'}</Td
 						>{#each questionLabels as label}<Td
 								class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
 								>{response.questionAnswers.find((q) => q.label === label)?.answer || '-'}</Td
-							>{/each}</Tr
+							>{/each}<Td class="max-w-xs min-w-48 break-words whitespace-pre-wrap"
+							>{response.answers.notes || '-'}</Td
+						></Tr
 					>{/each}</Tbody
 			></Table
 		>{:else}<P>No responses yet.</P>{/if}</Div

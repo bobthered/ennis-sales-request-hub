@@ -131,6 +131,8 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect(sharedHtml).toContain('Regional print job');
 	expect(sharedHtml).toContain('Price (10,000)');
 	expect(sharedHtml).toContain('Price (25,000)');
+	expect(sharedHtml.indexOf('No quote')).toBeLessThan(sharedHtml.indexOf('Before you respond'));
+	expect(sharedHtml.indexOf('id="notes"')).toBeGreaterThan(sharedHtml.indexOf('id="question-1"'));
 	expect(await (await fetch(`${origin}/r/${token}/files/${file.key}`)).text()).toBe(
 		'print specifications'
 	);

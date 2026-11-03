@@ -8,6 +8,15 @@
 </script>
 
 <svelte:head></svelte:head>
+{#if !data.own || editing}
+	<Button
+		type="submit"
+		form="response-details"
+		name="disposition"
+		value="no-quote"
+		formnovalidate
+		variants={['outline']}>No quote</Button
+	>{/if}
 <Card class="space-y-3 bg-white p-6"
 	><H2>Before you respond</H2><P
 		>Responding is optional. {data.request.visibility === 'shared'
@@ -30,7 +39,7 @@
 	{#if data.own && !editing}<Button type="button" onclick={() => (editing = true)}
 			>Edit response</Button
 		>{:else}
-		<Form method="POST" class="space-y-5"
+		<Form id="response-details" method="POST" class="space-y-5"
 			><Input type="hidden" name="operation" value={data.own ? 'edit' : 'create'} />
 			<Div class="space-y-2"
 				><Label for="name">Your name</Label><NameInput
@@ -80,6 +89,16 @@
 						class="w-full"
 					/></Div
 				>{/if}
+
+			{#each data.request.questions as question, i}<Div class="space-y-2"
+					><Label for={`question-${i}`}>{question}</Label><Textarea
+						id={`question-${i}`}
+						name={`question-${i}`}
+						value={data.own?.questionAnswers.find((q) => q.label === question)?.answer ?? ''}
+						maxlength={20000}
+						class="w-full"
+					/></Div
+				>{/each}
 			<Div class="space-y-2"
 				><Label for="notes">Notes</Label><Textarea
 					id="notes"
@@ -88,22 +107,6 @@
 					rows={4}
 					class="w-full"
 				/></Div
-			>
-			{#each data.request.questions as question, i}<Div class="space-y-2"
-					><Label for={`question-${i}`}>{question}</Label><Textarea
-						id={`question-${i}`}
-						name={`question-${i}`}
-						value={data.own?.answers[`Question ${i + 1}`] ?? ''}
-						maxlength={20000}
-						class="w-full"
-					/></Div
-				>{/each}
-			<Button
-				type="submit"
-				name="disposition"
-				value="no-quote"
-				formnovalidate
-				variants={['outline']}>No quote</Button
 			>
 			<Button type="submit">{data.own ? 'Save changes' : 'Submit response'}</Button></Form
 		>

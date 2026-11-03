@@ -114,6 +114,7 @@ export const actions = {
 						quantityPrices,
 						pricingCents: cents,
 						pricingUom: r.pricingUom || 'M',
+						questionLabels: r.questions.map((q) => q.label),
 						answers
 					}
 				},

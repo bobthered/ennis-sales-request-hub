@@ -248,7 +248,8 @@
 		<Div
 			class="space-y-3 rounded-md border border-neutral-200 bg-transparent p-4 dark:border-neutral-800"
 			><H2>Additional questions</H2><P class="text-sm"
-				>Add questions for responders. Every answer is optional. Questions are fixed when published.</P
+				>Add questions for responders. Every answer is optional. You can update questions while the
+				request is open. Existing answers keep their original question labels.</P
 			>
 			{#each questions as question, i}<Div class="flex items-center gap-2"
 					><Label for={`question-${i}`}>Question {i + 1}</Label><Input
@@ -256,9 +257,9 @@
 						name="questions"
 						bind:value={questions[i]}
 						maxlength={500}
-						disabled={request.status !== 'draft'}
+						disabled={request.status === 'closed'}
 						class="min-w-0 flex-1"
-					/>{#if request.status !== 'draft'}<Input
+					/>{#if request.status === 'closed'}<Input
 							type="hidden"
 							name="questions"
 							value={question}
@@ -268,7 +269,7 @@
 							onclick={() => changeQuestionRows(i)}>Remove</Button
 						>{/if}</Div
 				>{/each}
-			{#if request.status === 'draft'}<Button
+			{#if request.status !== 'closed'}<Button
 					type="button"
 					variants={['outline']}
 					disabled={questions.length >= 30}
