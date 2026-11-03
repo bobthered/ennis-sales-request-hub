@@ -18,7 +18,8 @@
 </Card>
 <Card class="space-y-4 bg-white p-6"
 	><H2>Share this request</H2><P
-		>Share project details and attachments by email. Response submission is not connected yet.</P
+		>Share project details and attachments by email. Recipients can submit pricing and answers using
+		the link.</P
 	>
 	{#if form?.shareUrl || data.shareUrl}
 		<Label for="share-link">Recipient link</Label><Input

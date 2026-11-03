@@ -19,6 +19,7 @@ export async function startRequest(creatorId: string) {
 		description: '',
 		dueAt: null,
 		visibility: 'creator-only',
+		pricingUom: 'M',
 		questions: { $size: 0 },
 		attachments: { $size: 0 },
 		shareTokenHash: { $exists: false },
@@ -38,6 +39,8 @@ export function parseDetails(form: FormData, final = false) {
 	if (final && (!title || !description)) error(400, 'Enter a project title and project details');
 	const visibility = read('visibility', 20);
 	if (visibility !== 'creator-only' && visibility !== 'shared') error(400, 'Invalid visibility');
+	const pricingUom = read('pricingUom', 2) || 'M';
+	if (!['M', 'EA', 'CA', 'RL', 'PK'].includes(pricingUom)) error(400, 'Invalid pricing unit');
 	const date = read('due', 10);
 	if (
 		date &&
@@ -56,6 +59,7 @@ export function parseDetails(form: FormData, final = false) {
 		title,
 		description,
 		visibility,
+		pricingUom: pricingUom as 'M' | 'EA' | 'CA' | 'RL' | 'PK',
 		dueAt: date ? new Date(date) : null,
 		questions: labels.map((label) => ({ label, type: 'text', required: false }))
 	};
@@ -64,11 +68,19 @@ export function parseDetails(form: FormData, final = false) {
 export async function saveRequest(id: string, owner: string | null, form: FormData, final = false) {
 	const fields = parseDetails(form, final);
 	const result = await SalesRequest.findOneAndUpdate(
-		{ ...ownedRequest(id, owner), status: { $ne: 'closed' } },
+		{
+			...ownedRequest(id, owner),
+			status: { $ne: 'closed' },
+			$or: [
+				{ status: 'draft' },
+				{ pricingUom: fields.pricingUom },
+				{ pricingUom: { $exists: false } }
+			]
+		},
 		{ $set: { ...fields, startedAt: new Date(), ...(final ? { status: 'open' } : {}) } },
 		{ returnDocument: 'after', runValidators: true }
 	);
-	if (!result) error(404, 'This request is unavailable or closed');
+	if (!result) error(404, 'Request unavailable, closed, or pricing unit changed after publishing');
 	return result;
 }
 

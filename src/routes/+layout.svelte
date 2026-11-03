@@ -44,18 +44,18 @@
 <Header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
 	<Div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
 		<A href="/" class="flex min-w-0 items-center gap-2 no-underline"
-			><EnnisLogo width={108} height={44} class="rounded bg-white" /><Span
+			><EnnisLogo width={108} height={44} class="shrink-0" /><Span
 				class="text-sm font-semibold sm:text-base">Sales Request Hub</Span
 			></A
 		>
 		<Div class="flex shrink-0 items-center gap-1 sm:gap-4">
 			<A
-				class="hidden md:inline-flex"
+				class="hidden text-sm md:inline-flex"
 				href="/requests"
 				variants={['button.base', 'button.variant.ghost']}>My Requests</A
 			>
 			<Form class="hidden md:block" method="POST" action="/requests/new"
-				><Button type="submit" variants={['ghost']}>New Request</Button></Form
+				><Button type="submit" class="text-sm" variants={['ghost']}>New Request</Button></Form
 			>
 			<Button
 				class="md:hidden"
@@ -72,8 +72,12 @@
 				placement="bottom"
 			>
 				{#snippet trigger(props)}
-					<Button {...props} aria-label="Settings" title="Settings" variants={['ghost', 'icon']}
-						><Settings aria-hidden="true" class="size-5" /></Button
+					<Button
+						class="hidden md:inline-flex"
+						{...props}
+						aria-label="Settings"
+						title="Settings"
+						variants={['ghost', 'icon']}><Settings aria-hidden="true" class="size-5" /></Button
 					>
 				{/snippet}
 				<Label for="theme-preference">Appearance</Label>
@@ -105,14 +109,30 @@
 	<Div class="flex flex-col gap-3"
 		><A
 			href="/"
+			class="text-sm"
 			onclick={() => (menuOpen = false)}
 			variants={['button.base', 'button.variant.ghost']}>Dashboard</A
 		><A
 			href="/requests"
+			class="text-sm"
 			onclick={() => (menuOpen = false)}
 			variants={['button.base', 'button.variant.ghost']}>My Requests</A
 		><Form method="POST" action="/requests/new" onsubmit={() => (menuOpen = false)}
-			><Button type="submit" class="w-full" variants={['ghost']}>New Request</Button></Form
+			><Button type="submit" class="w-full text-sm" variants={['ghost']}>New Request</Button></Form
+		></Div
+	>
+	<Div class="mt-6 space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700"
+		><Label for="mobile-appearance">Appearance</Label><Select
+			id="mobile-appearance"
+			class="w-full"
+			value={preference}
+			onchange={(event) =>
+				window.dispatchEvent(
+					new CustomEvent('ennis-theme-preference', { detail: event.currentTarget.value })
+				)}
+			><Option value="dark">Dark</Option><Option value="light">Light</Option><Option value="os"
+				>OS</Option
+			></Select
 		></Div
 	>
 </Drawer>

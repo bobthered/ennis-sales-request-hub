@@ -67,7 +67,7 @@
 	aria-label="Ennis"
 	><SvgTitle>Ennis</SvgTitle>{#each paths as path (path.d)}<Path
 			d={path.d}
-			fill={path.fill}
+			fill={path.fill === '#231815' ? 'currentColor' : path.fill}
 			fill-rule={path.evenodd ? 'evenodd' : 'nonzero'}
 			clip-rule={path.evenodd ? 'evenodd' : 'nonzero'}
 		/>{/each}</Svg

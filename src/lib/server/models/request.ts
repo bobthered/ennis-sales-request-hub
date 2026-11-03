@@ -4,6 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const requestSchema = new Schema(
 	{
+		pricingUom: { type: String, enum: ['M', 'EA', 'CA', 'RL', 'PK'], default: 'M', required: true },
 		creatorId: { type: String, required: true, index: true },
 		title: { type: String, default: '', trim: true, maxlength: 200 },
 		description: { type: String, default: '', maxlength: 20000 },

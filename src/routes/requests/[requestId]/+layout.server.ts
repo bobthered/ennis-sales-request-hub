@@ -13,6 +13,7 @@ export const load: LayoutServerLoad = async ({ cookies, params }) => {
 	return {
 		request: {
 			id: request.id,
+			pricingUom: request.pricingUom || 'M',
 			title: request.title || '',
 			description: request.description || '',
 			status: request.status,

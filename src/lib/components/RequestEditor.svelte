@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { pricingUnits } from '#lib/pricing.js';
 	import type { ComponentProps } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import {
@@ -18,6 +19,7 @@
 	import { theme as globalTheme } from 'sveltewind/theme';
 	type Attachment = { name: string; key: string; size: number };
 	type Draft = {
+		pricingUom: string;
 		id: string;
 		title: string;
 		description: string;
@@ -152,6 +154,22 @@
 				rows={4}
 				class="w-full"
 			/></Div
+		>
+		<Div class="space-y-2"
+			><Label for="pricingUom">Pricing UOM</Label><Select
+				id="pricingUom"
+				name="pricingUom"
+				value={request.pricingUom}
+				disabled={request.status !== 'draft'}
+				class="w-full"
+				>{#each pricingUnits as unit}<Option value={unit.value}>{unit.label}</Option>{/each}</Select
+			>{#if request.status !== 'draft'}<Input
+					type="hidden"
+					name="pricingUom"
+					value={request.pricingUom}
+				/>{/if}<P class="text-sm"
+				>All responses use this unit. It is fixed when you save the request.</P
+			></Div
 		>
 		<Div class="space-y-2"
 			><Label for="due">Due date (optional)</Label><Input

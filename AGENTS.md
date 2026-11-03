@@ -24,7 +24,7 @@ Keep project work inside this directory.
 - Participation is voluntary. No required invite list, participation tracking, or automatic reminders.
 - Shared attachments and Questions & Answers belong to requests. Recipients ask; only creators answer.
 - Before enabling writes, enforce ownership, visibility, edit tokens, and open/closed status on the server. Never expose private answers or edit tokens through public loaders.
-- Request creation, draft autosave, final save, and creator attachment uploads/downloads persist in MongoDB. Recipient links expose project details and attachments using hashed tokens. Recipient response submission remains a scaffold. Do not reintroduce sample requests.
+- Request creation, draft autosave, final save, and creator attachment uploads/downloads persist in MongoDB. Recipient links expose project details and attachments using hashed tokens. Recipient responses persist with a hashed edit token in an HttpOnly cookie for same-browser revisions. Pricing UOM is chosen on the request and locked on publishing; recipients cannot override it. Do not reintroduce sample requests.
 - Starting a request is a POST operation: delete only this creator's untouched blank drafts, then create a new draft before opening the editor. Preserve any draft with activity, text, questions, a date, changed visibility, attachments, or a share token. Never delete another creator's drafts.
 - Attachments are stored in MongoDB for this MVP: 1 MB per file, 3 MB total, at most 10 files per request. Normal queries must not return file bytes. Update these limits/storage together if requirements grow.
 
