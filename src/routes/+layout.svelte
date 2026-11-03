@@ -2,11 +2,15 @@
 	import './layout.css';
 	import '#lib/theme.js';
 	import { onMount } from 'svelte';
-	import { Settings } from '@lucide/svelte';
+	import { fly } from 'svelte/transition';
+	import { subtleReveal } from 'sveltewind/transitions';
+	import EnnisLogo, { ennisFavicon } from '#lib/components/EnnisLogo.svelte';
+	import { Settings, Menu } from '@lucide/svelte';
 	import {
 		A,
 		Button,
 		Div,
+		Drawer,
 		Form,
 		Header,
 		Label,
@@ -17,10 +21,11 @@
 		Select,
 		Span
 	} from 'sveltewind/components';
-	import favicon from '#lib/assets/favicon.svg';
+
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+	let menuOpen = $state(false);
 	let preference = $state('os');
 	onMount(() => {
 		const sync = () => {
@@ -33,21 +38,34 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={ennisFavicon} />
 </svelte:head>
 
 <Header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-	<Div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-		<A href="/" class="text-xl font-bold text-slate-950 no-underline dark:text-slate-50"
-			>ennis <Span class="font-normal text-slate-500 dark:text-slate-400">/ Sales Request Hub</Span
+	<Div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
+		<A href="/" class="flex min-w-0 items-center gap-2 no-underline"
+			><EnnisLogo width={108} height={44} class="rounded bg-white" /><Span
+				class="text-sm font-semibold sm:text-base">Sales Request Hub</Span
 			></A
 		>
-		<Div class="flex items-center gap-4">
-			<A href="/requests" variants={['button.base', 'button.variant.ghost']}>My Requests</A>
-			<Form method="POST" action="/requests/new"
+		<Div class="flex shrink-0 items-center gap-1 sm:gap-4">
+			<A
+				class="hidden md:inline-flex"
+				href="/requests"
+				variants={['button.base', 'button.variant.ghost']}>My Requests</A
+			>
+			<Form class="hidden md:block" method="POST" action="/requests/new"
 				><Button type="submit" variants={['ghost']}>New Request</Button></Form
 			>
+			<Button
+				class="md:hidden"
+				variants={['ghost', 'icon']}
+				aria-label="Open navigation"
+				aria-expanded={menuOpen}
+				onclick={() => (menuOpen = true)}><Menu class="size-5" /></Button
+			>
 			<Popover
+				transition={[subtleReveal, { duration: 160 }]}
 				role="dialog"
 				aria-label="Appearance settings"
 				class="w-56 space-y-3"
@@ -77,14 +95,27 @@
 		</Div>
 	</Div>
 </Header>
-<Div
-	class="border-b border-amber-200 bg-amber-50 px-6 py-3 dark:border-amber-900 dark:bg-amber-950"
+<Drawer
+	bind:isVisible={menuOpen}
+	title="Navigation"
+	position="right"
+	transition={[fly, { x: 320, duration: 220 }]}
+	class="w-80 max-w-[90vw]"
 >
-	<P class="mx-auto max-w-6xl text-sm text-amber-950 dark:text-amber-100"
-		>MVP preview · Requests and attachments save to MongoDB. Recipient responses are not connected
-		yet.</P
+	<Div class="flex flex-col gap-3"
+		><A
+			href="/"
+			onclick={() => (menuOpen = false)}
+			variants={['button.base', 'button.variant.ghost']}>Dashboard</A
+		><A
+			href="/requests"
+			onclick={() => (menuOpen = false)}
+			variants={['button.base', 'button.variant.ghost']}>My Requests</A
+		><Form method="POST" action="/requests/new" onsubmit={() => (menuOpen = false)}
+			><Button type="submit" class="w-full" variants={['ghost']}>New Request</Button></Form
+		></Div
 	>
-</Div>
+</Drawer>
 <Main id="main" class="mx-auto w-full max-w-6xl space-y-8 px-6 py-10 sm:py-14">
 	{@render children()}
 </Main>

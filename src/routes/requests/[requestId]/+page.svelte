@@ -20,24 +20,22 @@
 	><H2>Share this request</H2><P
 		>Share project details and attachments by email. Response submission is not connected yet.</P
 	>
-	{#if form?.shareUrl}
+	{#if form?.shareUrl || data.shareUrl}
 		<Label for="share-link">Recipient link</Label><Input
 			id="share-link"
 			readonly
-			value={form.shareUrl}
+			value={form?.shareUrl || data.shareUrl}
 			class="w-full"
 			onclick={(event) => event.currentTarget.select()}
 		/>
-		<A href={form.shareUrl}>Open recipient view</A>
-		<P>Select and copy this link before leaving this page.</P>
+		<A href={form?.shareUrl || data.shareUrl}>Open recipient view</A>
+		<P>Select and copy this link into your email.</P>
 	{/if}
 	{#if form?.message}<P role="alert">{form.message}</P>{/if}
 	<Form method="POST" action="?/share"
-		><Button type="submit" disabled={data.request.status !== 'open'}>Create a new share link</Button
-		></Form
+		><Button type="submit" disabled={data.request.status !== 'open'}>Get share link</Button></Form
 	>
-	<P class="text-sm"
-		>Creating a new link replaces any previous link. Save your request first to enable sharing.</P
+	<P class="text-sm">This link stays available here. Save your request first to enable sharing.</P
 	></Card
 >
 <Card class="space-y-3 bg-white p-6"
@@ -46,8 +44,13 @@
 			><A href={`/api/requests/${data.request.id}/files/${file.key}`} download>{file.name}</A></Div
 		>{:else}<P>No files attached</P>{/each}
 </Card>
-<Div class="flex flex-wrap gap-3"
-	><Button disabled>Close request</Button><Button disabled variants={['danger']}
-		>Delete request</Button
-	></Div
+<Form
+	method="POST"
+	action="?/delete"
+	onsubmit={(event) => {
+		if (!confirm('Delete this request and all its attachments? This cannot be undone.'))
+			event.preventDefault();
+	}}
+>
+	<Button type="submit" variants={['danger']}>Delete request</Button></Form
 >

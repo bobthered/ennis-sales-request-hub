@@ -44,7 +44,7 @@ The editor autosaves changes and allows files to be attached before final save. 
 
 Files are stored directly in MongoDB for this MVP, limited to 1 MB each, 3 MB total and 10 files per request. Uploads update the attachment and activity marker atomically; ordinary queries exclude bytes. Creator downloads require the owner cookie and are served as attachments. Larger file storage can be added later.
 
-The overview can generate a recipient link to view details and download attachments. Generating a new link replaces the previous one. Only a hash is stored; copy the link before leaving the result page. Response submission, Q&A posting, manual deletion, and closing requests remain unimplemented. The sample requests are removed. No live application data was used by the automated integration tests.
+The overview can generate a recipient link to view details and download attachments. Share links stay available on the overview and repeated generation keeps the same link. Only the token hash is stored. Response submission, Q&A posting, and closing requests remain unimplemented. Creators can delete their own requests, including their embedded attachments. The sample requests are removed. No live application data was used by the automated integration tests.
 
 ## Tests
 

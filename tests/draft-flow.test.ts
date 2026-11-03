@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 
 let mongo: MongoMemoryServer;
 let app: ChildProcess;
+let serverErrors = '';
 const origin = 'http://127.0.0.1:5189';
 beforeAll(async () => {
 	mongo = await MongoMemoryServer.create();
@@ -19,6 +20,9 @@ beforeAll(async () => {
 			env: { ...process.env, MONGODB_URI: uri, MONGODB_DB_NAME: 'http-flow-tests' }
 		}
 	);
+	app.stderr?.on('data', (data) => {
+		serverErrors += data.toString();
+	});
 	await new Promise<void>((resolve, reject) => {
 		const timer = setTimeout(() => reject(new Error('Test app did not start')), 60000);
 		app.stdout?.on('data', (data) => {
@@ -47,7 +51,7 @@ afterAll(async () => {
 it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP routes', async () => {
 	const records = mongoose.connection.collection('salesrequests');
 	const getNew = await fetch(`${origin}/requests/new`);
-	expect(getNew.status).toBe(200);
+	expect(getNew.status, serverErrors).toBe(200);
 	expect(await records.countDocuments()).toBe(0);
 	const create = (cookie = '') =>
 		fetch(`${origin}/requests/new`, {
@@ -128,4 +132,25 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect(stored?.shareTokenHash).not.toBe(token);
 	const list = await fetch(`${origin}/requests`, { headers: { Cookie: cookie } });
 	expect(await list.text()).toContain('Regional print job');
+	const overview = await fetch(`${origin}/requests/${id}`, { headers: { Cookie: cookie } });
+	expect(await overview.text()).toContain(`/r/${token}`);
+	const dashboard = await fetch(origin, { headers: { Cookie: cookie } });
+	expect(await dashboard.text()).toContain('Regional print job');
+	const denied = await fetch(`${origin}/requests/${id}?/delete`, {
+		method: 'POST',
+		body: new URLSearchParams(),
+		headers: { Origin: origin, Accept: 'text/html' },
+		redirect: 'manual'
+	});
+	expect(denied.status).toBe(404);
+	expect(await records.findOne({ _id: new mongoose.Types.ObjectId(id) })).not.toBeNull();
+	const deleted = await fetch(`${origin}/requests/${id}?/delete`, {
+		method: 'POST',
+		body: new URLSearchParams(),
+		headers: { Cookie: cookie, Origin: origin, Accept: 'text/html' },
+		redirect: 'manual'
+	});
+	expect(deleted.status).toBe(303);
+	expect(await records.findOne({ _id: new mongoose.Types.ObjectId(id) })).toBeNull();
+	expect((await fetch(`${origin}/r/${token}`)).status).toBe(404);
 }, 90000);
