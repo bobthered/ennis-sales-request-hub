@@ -173,7 +173,7 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	});
 	expect(duplicate.status).toBe(409);
 	expect(await submissions.countDocuments()).toBe(1);
-	const question = await fetch(`${origin}/r/${token}/questions`, {
+	const question = await fetch(`${origin}/r/${token}/questions/new`, {
 		method: 'POST',
 		body: new URLSearchParams({ name: 'Jane', question: 'What stock?' }),
 		headers: { Origin: origin, Accept: 'application/json' }

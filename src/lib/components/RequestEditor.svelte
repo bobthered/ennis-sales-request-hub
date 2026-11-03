@@ -211,23 +211,29 @@
 				></Div
 			>{/each}
 		{#if !attachments.length}<P>No files attached</P>{/if}
-		<Form method="POST" enctype="multipart/form-data" onsubmit={upload} class="space-y-3">
+		<Form
+			method="POST"
+			enctype="multipart/form-data"
+			onsubmit={upload}
+			class="space-y-3 rounded-md border border-neutral-200 p-4 dark:border-neutral-800"
+		>
 			<Input type="hidden" name="operation" value="upload" />
-			<Label for="file">Add a file</Label><Input
-				id="file"
-				name="file"
-				type="file"
-				required
-				disabled={uploading || request.status === 'closed'}
-				class="w-full"
-			/>
-			<P class="text-sm">Up to 1 MB per file, 3 MB total, and 10 files per request</P>
-			<Button
-				type="submit"
-				variants={['outline']}
-				disabled={uploading || request.status === 'closed'}
-				>{uploading ? 'Uploading...' : 'Attach file'}</Button
+			<Label for="file">Add a file</Label><Div class="flex items-center gap-3"
+				><Input
+					id="file"
+					name="file"
+					type="file"
+					required
+					disabled={uploading || request.status === 'closed'}
+					class="min-w-0 flex-1"
+				/><Button
+					type="submit"
+					variants={['outline']}
+					disabled={uploading || request.status === 'closed'}
+					class="shrink-0">{uploading ? 'Uploading...' : 'Attach file'}</Button
+				></Div
 			>
+			<P class="text-sm">Up to 1 MB per file, 3 MB total, and 10 files per request</P>
 		</Form>
 	</Div>
 	<P role="status" aria-live="polite" class="text-sm">{status}</P>

@@ -61,7 +61,7 @@
 				/></Div
 			>
 			<Div class="space-y-2"
-				><Label for="notes">Capabilities, lead time, and notes</Label><Textarea
+				><Label for="notes">Notes</Label><Textarea
 					id="notes"
 					name="notes"
 					value={data.own?.answers.notes ?? ''}

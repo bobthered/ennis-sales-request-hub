@@ -19,7 +19,10 @@
 			{ title: 'Questions & Answers', value: `/r/${params.token}/questions` }
 		]}
 		bind:value={
-			() => page.url.pathname,
+			() =>
+				page.url.pathname.includes('/questions')
+					? `/r/${params.token}/questions`
+					: `/r/${params.token}`,
 			(value) => {
 				void goto(value);
 			}

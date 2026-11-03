@@ -26,14 +26,14 @@
 				><Tr
 					><Th scope="col">Name</Th><Th scope="col">Branch</Th><Th scope="col">Price (USD)</Th><Th
 						scope="col">UOM</Th
-					><Th scope="col">Answers</Th></Tr
+					><Th scope="col">Notes</Th><Th scope="col">Additional answers</Th></Tr
 				></Thead
 			><Tbody
 				>{#each responses as response}<Tr
 						><Td>{response.name}</Td><Td>{response.branch}</Td><Td>{response.price}</Td><Td
 							>{response.uom}</Td
-						><Td
-							>{#each Object.entries(response.answers) as [label, answer]}{#if answer}<P
+						><Td>{response.answers.notes || '-'}</Td><Td
+							>{#each Object.entries(response.answers) as [label, answer]}{#if label !== 'notes' && answer}<P
 										>{label}: {answer}</P
 									>{/if}{/each}</Td
 						></Tr

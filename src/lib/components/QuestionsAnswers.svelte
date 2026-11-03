@@ -1,14 +1,33 @@
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
-	import { Button, Card, Form, Input, H2, Label, P, Textarea } from 'sveltewind/components';
+	import {
+		A,
+		Button,
+		Card,
+		Div,
+		Form,
+		Input,
+		H2,
+		Label,
+		P,
+		Table,
+		Thead,
+		Tbody,
+		Tr,
+		Th,
+		Td,
+		Textarea
+	} from 'sveltewind/components';
 	import { theme as globalTheme } from 'sveltewind/theme';
 	type Props = ComponentProps<typeof Card> & {
 		creator?: boolean;
+		askHref?: string;
 		questions: { id: string; askedBy: string; question: string; answer: string }[];
 		message?: string;
 	};
 	let {
 		creator = false,
+		askHref = '',
 		questions,
 		message = '',
 		class: className = '',
@@ -20,35 +39,38 @@
 </script>
 
 <Card {theme} {...restProps} class={classes}>
-	<H2>Questions & Answers</H2>
+	<Div class="flex items-center justify-between gap-4"
+		><H2>Questions & Answers</H2>{#if !creator && askHref}<A
+				href={askHref}
+				variants={['button.base']}>Ask a question</A
+			>{/if}</Div
+	>
 	<P>Questions and the request creator's answers are visible to everyone with the request link.</P>
 	{#if message}<P role="alert">{message}</P>{/if}
-	{#each questions as question}<Card class="space-y-3 p-4"
-			><P>{question.askedBy}: {question.question}</P>{#if question.answer}<P
-					>Answer: {question.answer}</P
-				>{:else}<P>Awaiting an answer</P>{/if}{#if creator}<Form method="POST" class="space-y-2"
-					><Input type="hidden" name="id" value={question.id} /><Label for={`answer-${question.id}`}
-						>Your answer</Label
-					><Textarea
-						id={`answer-${question.id}`}
-						name="answer"
-						value={question.answer}
-						required
-						maxlength={10000}
-					/><Button type="submit">Save answer</Button></Form
-				>{/if}</Card
-		>{:else}<P>No questions yet.</P>{/each}
-	{#if !creator}<Form method="POST" class="space-y-3"
-			><Label for="ask-name">Your name</Label><Input
-				id="ask-name"
-				name="name"
-				required
-				maxlength={200}
-			/><Label for="question">Your question</Label><Textarea
-				id="question"
-				name="question"
-				required
-				maxlength={5000}
-			/><Button type="submit">Ask a question</Button></Form
-		>{/if}
-</Card>
+	<Div class="overflow-x-auto"
+		><Table class="w-full text-sm"
+			><Thead
+				><Tr
+					><Th scope="col">Asked by</Th><Th scope="col">Question</Th><Th scope="col">Answer</Th></Tr
+				></Thead
+			><Tbody>
+				{#each questions as question}<Tr
+						><Td>{question.askedBy}</Td><Td class="whitespace-pre-wrap">{question.question}</Td><Td
+							>{#if creator}<Form method="POST" class="space-y-2"
+									><Input type="hidden" name="id" value={question.id} /><Label
+										for={`answer-${question.id}`}>Your answer</Label
+									><Textarea
+										id={`answer-${question.id}`}
+										name="answer"
+										value={question.answer}
+										required
+										maxlength={10000}
+									/><Button type="submit">Save answer</Button></Form
+								>{:else}<P class="whitespace-pre-wrap">{question.answer || 'Awaiting an answer'}</P
+								>{/if}</Td
+						></Tr
+					>{:else}<Tr><Td colspan={3}>No questions yet.</Td></Tr>{/each}
+			</Tbody></Table
+		></Div
+	></Card
+>
