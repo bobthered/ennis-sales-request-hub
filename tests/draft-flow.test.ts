@@ -190,6 +190,10 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	});
 	expect(answer.status).toBe(200);
 	expect(await (await fetch(`${origin}/r/${token}/questions`)).text()).toContain('White stock');
+	const mine = await fetch(`${origin}/responses`, { headers: { Cookie: responseCookie } });
+	expect(await mine.text()).toContain('130.00');
+	const other = await fetch(`${origin}/responses`);
+	expect(await other.text()).not.toContain('130.00');
 	const overview = await fetch(`${origin}/requests/${id}`, { headers: { Cookie: cookie } });
 	expect(await overview.text()).toContain(`/r/${token}`);
 	const dashboard = await fetch(origin, { headers: { Cookie: cookie } });

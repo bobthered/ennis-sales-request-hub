@@ -56,6 +56,11 @@
 				href="/requests"
 				variants={['button.base', 'button.variant.ghost']}>My Requests</A
 			>
+			<A
+				href="/responses"
+				class="hidden min-h-9 px-3 py-2 text-sm md:inline-flex"
+				variants={['button.base', 'button.variant.ghost']}>My Responses</A
+			>
 			<Form class="hidden md:block" method="POST" action="/requests/new"
 				><Button type="submit" class="text-sm" variants={['ghost']}>New Request</Button></Form
 			>
@@ -119,7 +124,13 @@
 			class="min-h-9 w-full justify-start px-3 py-2 text-left text-sm"
 			onclick={() => (menuOpen = false)}
 			variants={['button.base', 'button.variant.ghost']}>My Requests</A
-		><Form method="POST" action="/requests/new" onsubmit={() => (menuOpen = false)}
+		><A
+			href="/responses"
+			class="min-h-9 w-full justify-start px-3 py-2 text-left text-sm"
+			onclick={() => (menuOpen = false)}
+			variants={['button.base', 'button.variant.ghost']}>My Responses</A
+		>
+		<Form method="POST" action="/requests/new" onsubmit={() => (menuOpen = false)}
 			><Button
 				type="submit"
 				class="min-h-9 w-full justify-start px-3 py-2 text-left text-sm"
@@ -127,7 +138,7 @@
 			></Form
 		></Div
 	>
-	<Div class="mt-6 space-y-3 border-t border-neutral-200 pt-6 dark:border-neutral-700"
+	<Div class="mt-6 space-y-3 border-t border-neutral-200 pt-6 dark:border-neutral-800"
 		><Label for="mobile-appearance">Appearance</Label><Select
 			id="mobile-appearance"
 			class="w-full"
