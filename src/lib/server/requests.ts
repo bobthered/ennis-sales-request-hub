@@ -21,6 +21,7 @@ export async function startRequest(creatorId: string) {
 		visibility: 'creator-only',
 		pricingUom: 'M',
 		questions: { $size: 0 },
+		$or: [{ quantities: { $size: 0 } }, { quantities: { $exists: false } }],
 		attachments: { $size: 0 },
 		shareTokenHash: { $exists: false },
 		createdAt: { $lt: now }
@@ -41,6 +42,23 @@ export function parseDetails(form: FormData, final = false) {
 	if (visibility !== 'creator-only' && visibility !== 'shared') error(400, 'Invalid visibility');
 	const pricingUom = read('pricingUom', 2) || 'M';
 	if (!['M', 'EA', 'CA', 'RL', 'PK'].includes(pricingUom)) error(400, 'Invalid pricing unit');
+	const rawQuantities = form.getAll('quantities');
+	if (rawQuantities.length > 20) error(400, 'Use up to 20 quantities');
+	const quantities = rawQuantities
+		.filter((q) => q !== '')
+		.map((q) => {
+			if (
+				typeof q !== 'string' ||
+				!/^\d+$/.test(q) ||
+				!Number.isSafeInteger(Number(q)) ||
+				Number(q) < 1
+			)
+				error(400, 'Quantities must be positive whole numbers');
+			return Number(q);
+		});
+	if (new Set(quantities).size !== quantities.length) error(400, 'Quantities must be unique');
+	if (final && (!quantities.length || quantities.length !== rawQuantities.length))
+		error(400, 'Enter at least one quantity and complete every quantity field');
 	const date = read('due', 10);
 	if (
 		date &&
@@ -56,6 +74,7 @@ export function parseDetails(form: FormData, final = false) {
 	if (labels.length > 30 || labels.some((q) => q.length > 500))
 		error(400, 'Use up to 30 questions, with 500 characters each');
 	return {
+		quantities,
 		title,
 		description,
 		visibility,
@@ -66,11 +85,29 @@ export function parseDetails(form: FormData, final = false) {
 }
 
 export async function saveRequest(id: string, owner: string | null, form: FormData, final = false) {
-	const fields = parseDetails(form, final);
+	const existing = final
+		? await SalesRequest.findOne(ownedRequest(id, owner)).select('status quantities')
+		: null;
+	const legacy =
+		existing?.status === 'open' &&
+		!existing.quantities.length &&
+		form.getAll('quantities').every((q) => q === '');
+	const fields = parseDetails(form, final && !legacy);
+	if (final && (!fields.title || !fields.description))
+		error(400, 'Enter a project title and project details');
 	const result = await SalesRequest.findOneAndUpdate(
 		{
 			...ownedRequest(id, owner),
 			status: { $ne: 'closed' },
+			$and: [
+				{
+					$or: [
+						{ status: 'draft' },
+						{ quantities: fields.quantities },
+						{ quantities: { $exists: false } }
+					]
+				}
+			],
 			$or: [
 				{ status: 'draft' },
 				{ pricingUom: fields.pricingUom },
@@ -80,7 +117,8 @@ export async function saveRequest(id: string, owner: string | null, form: FormDa
 		{ $set: { ...fields, startedAt: new Date(), ...(final ? { status: 'open' } : {}) } },
 		{ returnDocument: 'after', runValidators: true }
 	);
-	if (!result) error(404, 'Request unavailable, closed, or pricing unit changed after publishing');
+	if (!result)
+		error(404, 'Request unavailable, closed, or pricing unit/quantities changed after publishing');
 	return result;
 }
 

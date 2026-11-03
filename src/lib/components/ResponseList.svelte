@@ -13,10 +13,15 @@
 			name: string;
 			branch: string;
 			price: string;
+			prices: { quantity: number; price: string }[];
 			uom: string;
 			answers: Record<string, string>;
 		}[];
 	} = $props();
+	const quantities = $derived(
+		[...new Set(responses.flatMap((r) => r.prices.map((p) => p.quantity)))].sort((a, b) => a - b)
+	);
+	const legacy = $derived(responses.some((r) => !r.prices.length));
 	const classes = $derived(theme.resolve('responseList', variants, className));
 </script>
 
@@ -24,13 +29,17 @@
 	{#if responses.length}<Table class="w-full text-sm"
 			><Thead
 				><Tr
-					><Th scope="col">Name</Th><Th scope="col">Branch</Th><Th scope="col">Price (USD)</Th><Th
-						scope="col">UOM</Th
-					><Th scope="col">Notes</Th><Th scope="col">Additional answers</Th></Tr
+					><Th scope="col">Name</Th><Th scope="col">Branch</Th>{#each quantities as quantity}<Th
+							scope="col">Price ({quantity.toLocaleString('en-US')})</Th
+						>{/each}{#if legacy}<Th scope="col">Price (USD)</Th>{/if}<Th scope="col">UOM</Th><Th
+						scope="col">Notes</Th
+					><Th scope="col">Additional answers</Th></Tr
 				></Thead
 			><Tbody
 				>{#each responses as response}<Tr
-						><Td>{response.name}</Td><Td>{response.branch}</Td><Td>{response.price}</Td><Td
+						><Td>{response.name}</Td><Td>{response.branch}</Td>{#each quantities as quantity}<Td
+								>{response.prices.find((p) => p.quantity === quantity)?.price ?? '-'}</Td
+							>{/each}{#if legacy}<Td>{response.prices.length ? '-' : response.price}</Td>{/if}<Td
 							>{response.uom}</Td
 						><Td>{response.answers.notes || '-'}</Td><Td
 							>{#each Object.entries(response.answers) as [label, answer]}{#if label !== 'notes' && answer}<P

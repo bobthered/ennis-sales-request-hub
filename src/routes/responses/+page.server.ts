@@ -24,10 +24,18 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			return [
 				{
 					id: row.id,
+					prices: (row.quantityPrices ?? []).map((p) => ({
+						quantity: p.quantity,
+						price: (p.cents / 100).toFixed(2)
+					})),
 					title: request.title,
 					name: row.name,
 					branch: row.branch,
-					price: ((row.pricingCents ?? 0) / 100).toFixed(2),
+					price: row.quantityPrices?.length
+						? row.quantityPrices
+								.map((p) => `${p.quantity.toLocaleString('en-US')}: ${(p.cents / 100).toFixed(2)}`)
+								.join(' / ')
+						: ((row.pricingCents ?? 0) / 100).toFixed(2),
 					uom: row.pricingUom,
 					status: request.status,
 					href:

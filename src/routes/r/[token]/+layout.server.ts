@@ -6,6 +6,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	const r = await sharedRequest(params.token);
 	return {
 		request: {
+			quantities: r.quantities ?? [],
 			pricingUom: r.pricingUom || 'M',
 			title: r.title,
 			description: r.description,

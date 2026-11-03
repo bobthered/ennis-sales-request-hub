@@ -48,18 +48,33 @@
 					class="w-full"
 				/></Div
 			>
-			<Div class="space-y-2"
-				><Label for="price">Pricing (USD / {data.request.pricingUom})</Label><Input
-					id="price"
-					name="price"
-					value={data.own?.price ?? ''}
-					required
-					type="number"
-					min="0"
-					step="0.01"
-					class="w-full"
-				/></Div
-			>
+			{#if data.request.quantities.length}{#each data.request.quantities as quantity}<Div
+						class="space-y-2"
+						><Label for={`price-${quantity}`}
+							>Price ({quantity.toLocaleString('en-US')}) ? USD / {data.request.pricingUom}</Label
+						><Input
+							id={`price-${quantity}`}
+							name={`price-${quantity}`}
+							type="number"
+							min="0"
+							step="0.01"
+							required
+							value={data.own?.prices.find((p) => p.quantity === quantity)?.price ?? ''}
+							class="w-full"
+						/></Div
+					>{/each}{:else}
+				<Div class="space-y-2"
+					><Label for="price">Pricing (USD / {data.request.pricingUom})</Label><Input
+						id="price"
+						name="price"
+						value={data.own?.price ?? ''}
+						required
+						type="number"
+						min="0"
+						step="0.01"
+						class="w-full"
+					/></Div
+				>{/if}
 			<Div class="space-y-2"
 				><Label for="notes">Notes</Label><Textarea
 					id="notes"

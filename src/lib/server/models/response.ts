@@ -8,6 +8,12 @@ const responseSchema = new Schema(
 		name: { type: String, required: true, trim: true, maxlength: 200 },
 		branch: { type: String, required: true, trim: true, maxlength: 200 },
 		// Store money in integer cents; validate safe integers in the submission service.
+		quantityPrices: [
+			{
+				quantity: { type: Number, required: true, min: 1 },
+				cents: { type: Number, required: true, min: 0, validate: Number.isSafeInteger }
+			}
+		],
 		pricingCents: { type: Number, min: 0, validate: Number.isSafeInteger },
 		pricingUom: { type: String, enum: ['M', 'EA', 'CA', 'RL', 'PK'], default: 'M', required: true },
 		currency: { type: String, default: 'USD' },

@@ -1,3 +1,4 @@
+import { responseView } from '#lib/server/response-view.js';
 import { randomBytes } from 'node:crypto';
 import { fail, isHttpError } from '@sveltejs/kit';
 import { connectDatabase } from '#lib/server/db.js';
@@ -26,21 +27,8 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 				: null;
 	const rows = filter ? await RequestResponse.find(filter).sort({ createdAt: -1 }) : [];
 	return {
-		own: own
-			? {
-					name: own.name,
-					branch: own.branch,
-					price: ((own.pricingCents ?? 0) / 100).toFixed(2),
-					answers: Object.fromEntries(own.answers ?? [])
-				}
-			: null,
-		responses: rows.map((row) => ({
-			name: row.name,
-			branch: row.branch,
-			price: row.pricingCents == null ? '' : (row.pricingCents / 100).toFixed(2),
-			uom: row.pricingUom,
-			answers: Object.fromEntries(row.answers ?? [])
-		}))
+		own: own ? responseView(own) : null,
+		responses: rows.map(responseView)
 	};
 };
 export const actions = {
@@ -68,12 +56,21 @@ export const actions = {
 				return text;
 			};
 			const name = read('name', 200, true),
-				branch = read('branch', 200, true),
-				price = read('price', 20, true);
-			if (!/^\d+(\.\d{1,2})?$/.test(price))
-				throw new Error('Enter pricing with up to two decimal places');
-			const cents = Math.round(Number(price) * 100);
-			if (!Number.isSafeInteger(cents)) throw new Error('Pricing is too large');
+				branch = read('branch', 200, true);
+			const money = (key: string) => {
+				const value = read(key, 20, true);
+				if (!/^\d+(\.\d{1,2})?$/.test(value))
+					throw new Error('Enter a price for every quantity, with up to two decimal places');
+				const cents = Math.round(Number(value) * 100);
+				if (!Number.isSafeInteger(cents)) throw new Error('Pricing is too large');
+				return cents;
+			};
+			const quantityPrices = (r.quantities ?? []).map((quantity) => ({
+				quantity,
+				cents: money(`price-${quantity}`)
+			}));
+			const cents = quantityPrices.length ? undefined : money('price');
+
 			const answers: Record<string, string> = { notes: read('notes', 20000) };
 			for (let i = 0; i < r.questions.length; i++)
 				answers[`Question ${i + 1}`] = read(`question-${i}`, 20000, r.questions[i].required);
@@ -81,7 +78,16 @@ export const actions = {
 			const token = cookies.get(key) || randomBytes(32).toString('hex');
 			await RequestResponse.findOneAndUpdate(
 				{ requestId: r._id, editTokenHash: hashToken(token) },
-				{ $set: { name, branch, pricingCents: cents, pricingUom: r.pricingUom || 'M', answers } },
+				{
+					$set: {
+						name,
+						branch,
+						quantityPrices,
+						pricingCents: cents,
+						pricingUom: r.pricingUom || 'M',
+						answers
+					}
+				},
 				{ upsert: true, runValidators: true }
 			);
 			cookies.set(key, token, {

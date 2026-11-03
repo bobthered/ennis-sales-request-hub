@@ -21,6 +21,7 @@ const details = (title = '') => {
 	form.set('title', title);
 	form.set('description', title ? 'Project details' : '');
 	form.set('visibility', 'creator-only');
+	form.set('quantities', '10000');
 	return form;
 };
 
@@ -103,6 +104,19 @@ describe('MongoDB draft lifecycle', () => {
 		);
 		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(3);
 		expect((await SalesRequest.findById(draft.id))?.attachments).toHaveLength(3);
+	});
+	it('requires a quantity to publish, rejects duplicates, and locks quantities after publishing', async () => {
+		const draft = await startRequest('alice');
+		const form = details('Job');
+		form.delete('quantities');
+		await expect(saveRequest(draft.id, 'alice', form, true)).rejects.toMatchObject({ status: 400 });
+		form.append('quantities', '10000');
+		form.append('quantities', '10000');
+		expect(() => parseDetails(form)).toThrow();
+		form.set('quantities', '10000');
+		await saveRequest(draft.id, 'alice', form, true);
+		form.set('quantities', '20000');
+		await expect(saveRequest(draft.id, 'alice', form)).rejects.toMatchObject({ status: 404 });
 	});
 	it('rejects invalid input rather than accepting arbitrary request fields', () => {
 		const form = details('Project');

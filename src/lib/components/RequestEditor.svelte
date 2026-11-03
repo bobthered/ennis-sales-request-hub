@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { pricingUnits } from '#lib/pricing.js';
-	import type { ComponentProps } from 'svelte';
+	import { untrack, tick, type ComponentProps } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import {
 		A,
@@ -19,6 +19,7 @@
 	import { theme as globalTheme } from 'sveltewind/theme';
 	type Attachment = { name: string; key: string; size: number };
 	type Draft = {
+		quantities: number[];
 		pricingUom: string;
 		id: string;
 		title: string;
@@ -44,6 +45,15 @@
 	$effect(() => {
 		attachments = request.attachments;
 	});
+	let quantities = $state<(number | '')[]>(
+		untrack(() => (request.quantities.length ? [...request.quantities] : ['']))
+	);
+	async function changeQuantityRows(index?: number) {
+		if (index === undefined) quantities = [...quantities, ''];
+		else quantities = quantities.filter((_, i) => i !== index);
+		await tick();
+		void autosave();
+	}
 	let status = $state('Draft created');
 	let dirty = $state(false);
 	let working = $state(false);
@@ -156,7 +166,40 @@
 				class="w-full"
 			/></Div
 		>
-		<Div class="space-y-2"
+		{#if request.status === 'draft' || request.quantities.length}<Div class="space-y-3"
+				><H2>Quantities</H2><P class="text-sm"
+					>Add at least one quantity. Responders price each quantity using the selected UOM.
+					Quantities are fixed when published.</P
+				>
+				{#each quantities as quantity, i}<Div class="flex items-center gap-2"
+						><Label for={`quantity-${i}`}>Quantity {i + 1}</Label><Input
+							id={`quantity-${i}`}
+							name="quantities"
+							type="number"
+							min="1"
+							step="1"
+							required
+							bind:value={quantities[i]}
+							disabled={request.status !== 'draft'}
+							class="min-w-0 flex-1"
+						/>{#if request.status !== 'draft'}<Input
+								type="hidden"
+								name="quantities"
+								value={quantity}
+							/>{:else if quantities.length > 1}<Button
+								type="button"
+								variants={['danger']}
+								onclick={() => changeQuantityRows(i)}>Remove</Button
+							>{/if}</Div
+					>{/each}
+				{#if request.status === 'draft'}<Button
+						type="button"
+						variants={['outline']}
+						disabled={quantities.length >= 20}
+						onclick={() => changeQuantityRows()}>Add quantity</Button
+					>{/if}</Div
+			>
+		{/if}<Div class="space-y-2"
 			><Label for="pricingUom">Pricing UOM</Label><Select
 				id="pricingUom"
 				name="pricingUom"

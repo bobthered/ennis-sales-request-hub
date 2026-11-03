@@ -1,3 +1,4 @@
+import { responseView } from '#lib/server/response-view.js';
 import { connectDatabase } from '#lib/server/db.js';
 import { ownedRequest } from '#lib/server/requests.js';
 import { getOwner } from '#lib/server/owner.js';
@@ -11,12 +12,6 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 	if (!r) error(404);
 	const rows = await RequestResponse.find({ requestId: r._id }).sort({ createdAt: -1 });
 	return {
-		responses: rows.map((row) => ({
-			name: row.name,
-			branch: row.branch,
-			price: row.pricingCents == null ? '' : (row.pricingCents / 100).toFixed(2),
-			uom: row.pricingUom,
-			answers: Object.fromEntries(row.answers ?? [])
-		}))
+		responses: rows.map(responseView)
 	};
 };

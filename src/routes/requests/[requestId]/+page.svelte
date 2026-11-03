@@ -7,6 +7,10 @@
 <svelte:head><title>Request overview</title></svelte:head>
 <Card class="space-y-4 bg-white p-6">
 	<H2>Project details</H2><P>{data.request.description || 'No project details yet'}</P>
+	<P
+		>Quantities: {data.request.quantities.map((q) => q.toLocaleString('en-US')).join(', ') ||
+			'Not specified'}</P
+	>
 	<P>Status: {data.request.status}</P>
 	<P
 		>{data.request.visibility === 'shared'

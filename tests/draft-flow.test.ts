@@ -79,6 +79,8 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	values.set('title', 'Regional print job');
 	values.set('description', 'Brochure specifications');
 	values.set('visibility', 'shared');
+	values.append('quantities', '10000');
+	values.append('quantities', '25000');
 	const autosave = await fetch(`${origin}/api/requests/${id}`, {
 		method: 'POST',
 		body: values,
@@ -133,12 +135,19 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	const list = await fetch(`${origin}/requests`, { headers: { Cookie: cookie } });
 	expect(await list.text()).toContain('Regional print job');
 	const recipientCookie = shared.headers.get('set-cookie')!.split(';')[0];
+	const missingPrice = await fetch(`${origin}/r/${token}`, {
+		method: 'POST',
+		body: new URLSearchParams({ name: 'Jane', branch: 'Dallas', 'price-10000': '100.00' }),
+		headers: { Cookie: recipientCookie, Origin: origin, Accept: 'application/json' }
+	});
+	expect(missingPrice.status).toBe(400);
 	const response = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
 		body: new URLSearchParams({
 			name: 'Jane',
 			branch: 'Dallas',
-			price: '125.50',
+			'price-10000': '125.50',
+			'price-25000': '110.00',
 			pricingUom: 'PK',
 			notes: 'Ready'
 		}),
@@ -148,14 +157,15 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	const responseCookie = recipientCookie;
 	const submissions = mongoose.connection.collection('requestresponses');
 	const saved = await submissions.findOne({ requestId: new mongoose.Types.ObjectId(id) });
-	expect(saved?.pricingCents).toBe(12550);
+	expect(saved?.quantityPrices.map((p: { cents: number }) => p.cents)).toEqual([12550, 11000]);
 	expect(saved?.pricingUom).toBe('M');
 	const revise = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
 		body: new URLSearchParams({
 			name: 'Jane',
 			branch: 'Dallas',
-			price: '130.00',
+			'price-10000': '130.00',
+			'price-25000': '115.00',
 			operation: 'edit'
 		}),
 		headers: { Origin: origin, Accept: 'application/json', Cookie: responseCookie }
@@ -165,7 +175,10 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	const responses = await fetch(`${origin}/requests/${id}/responses`, {
 		headers: { Cookie: cookie }
 	});
-	expect(await responses.text()).toContain('130.00');
+	const responseHtml = await responses.text();
+	expect(responseHtml).toContain('130.00');
+	expect(responseHtml).toContain('Price (10,000)');
+	expect(responseHtml).toContain('115.00');
 	const duplicate = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
 		body: new URLSearchParams({ name: 'Jane', branch: 'Dallas', price: '99' }),

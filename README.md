@@ -46,6 +46,8 @@ Files are stored directly in MongoDB for this MVP, limited to 1 MB each, 3 MB to
 
 The overview can generate a recipient link to view details and download attachments. Share links stay available on the overview and repeated generation keeps the same link. Only the token hash is stored. Recipients can submit and revise responses from the same browser. Creators choose the pricing UOM (M by default) before publishing; all responses use that unit. Recipients can post shared questions and creators can answer them. Closing requests remains unimplemented. Creators can delete their own requests, including their embedded attachments. The sample requests are removed. No live application data was used by the automated integration tests.
 
+New requests require at least one unique positive whole-number quantity (up to 20). Creators add or remove quantities while drafting; publishing locks the quantities and pricing UOM. Responders enter a price for every requested quantity, and response tables show a separate column such as `Price (10,000)`. Revisions preserve the same quantity structure. Existing requests and responses without quantities keep their single-price workflow.
+
 ## Tests
 
 `npm test` runs integration tests against a temporary local MongoDB using mongodb-memory-server. The first run downloads a MongoDB binary and needs network access. Tests never read `.env` or connect to the application's database.
