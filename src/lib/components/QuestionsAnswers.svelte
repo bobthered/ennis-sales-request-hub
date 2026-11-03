@@ -54,7 +54,10 @@
 			><Tbody>
 				{#each questions as question}<Tr
 						><Td>{question.askedBy}</Td><Td class="whitespace-pre-wrap">{question.question}</Td><Td
-							>{#if creator}<Form method="POST" class="flex min-w-64 items-center gap-2">
+							>{#if creator}<Form
+									method="POST"
+									class="flex min-w-64 flex-row flex-nowrap items-center gap-2 space-y-0"
+								>
 									<Input type="hidden" name="id" value={question.id} /><Input
 										id={`answer-${question.id}`}
 										aria-label={`Answer to: ${question.question}`}
