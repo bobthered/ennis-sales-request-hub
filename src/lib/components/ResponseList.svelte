@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
 	import { theme as globalTheme } from 'sveltewind/theme';
-	import { Card, Div, H2, P } from 'sveltewind/components';
+	import { Div, Table, Thead, Tbody, Tr, Th, Td, P } from 'sveltewind/components';
 	let {
 		responses,
 		class: className = '',
@@ -20,11 +20,24 @@
 	const classes = $derived(theme.resolve('responseList', variants, className));
 </script>
 
-<Div {theme} {...restProps} class={classes}>
-	{#each responses as response}<Card class="space-y-3 p-5"
-			><H2>{response.name} / {response.branch}</H2><P>USD {response.price} / {response.uom}</P
-			>{#each Object.entries(response.answers) as [label, answer]}{#if answer}<P
-						><strong>{label === 'notes' ? 'Notes' : label}:</strong> {answer}</P
-					>{/if}{/each}</Card
-		>{:else}<P>No responses yet.</P>{/each}
-</Div>
+<Div {theme} {...restProps} class={`${classes} overflow-x-auto`}>
+	{#if responses.length}<Table class="w-full text-sm"
+			><Thead
+				><Tr
+					><Th scope="col">Name</Th><Th scope="col">Branch</Th><Th scope="col">Price (USD)</Th><Th
+						scope="col">UOM</Th
+					><Th scope="col">Answers</Th></Tr
+				></Thead
+			><Tbody
+				>{#each responses as response}<Tr
+						><Td>{response.name}</Td><Td>{response.branch}</Td><Td>{response.price}</Td><Td
+							>{response.uom}</Td
+						><Td
+							>{#each Object.entries(response.answers) as [label, answer]}{#if answer}<P
+										>{label}: {answer}</P
+									>{/if}{/each}</Td
+						></Tr
+					>{/each}</Tbody
+			></Table
+		>{:else}<P>No responses yet.</P>{/if}</Div
+>

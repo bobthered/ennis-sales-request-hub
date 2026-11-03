@@ -2,6 +2,7 @@
 	import { A, Button, Card, Div, Form, H2, Input, Label, P, Textarea } from 'sveltewind/components';
 	import ResponseList from '#lib/components/ResponseList.svelte';
 	import type { PageProps } from './$types';
+	let editing = $state(false);
 	let { data, params, form }: PageProps = $props();
 </script>
 
@@ -19,60 +20,68 @@
 </Card>
 <Card class="space-y-5 bg-white p-6"
 	><H2>Your response</H2>
-	{#if form?.success}<P role="status"
-			>Response saved. You can submit again from this browser to update it.</P
-		>{/if}
+	{#if form?.success}<P role="status">Response saved.</P>{/if}
 	{#if form?.message}<P role="alert">{form.message}</P>{/if}
-	<Form method="POST" class="space-y-5">
-		<Div class="space-y-2"
-			><Label for="name">Your name</Label><Input
-				id="name"
-				name="name"
-				required
-				maxlength={200}
-				autocomplete="name"
-				class="w-full"
-			/></Div
-		>
-		<Div class="space-y-2"
-			><Label for="branch">Branch</Label><Input
-				id="branch"
-				name="branch"
-				required
-				maxlength={200}
-				class="w-full"
-			/></Div
-		>
-		<Div class="space-y-2"
-			><Label for="price">Pricing (USD / {data.request.pricingUom})</Label><Input
-				id="price"
-				name="price"
-				required
-				type="number"
-				min="0"
-				step="0.01"
-				class="w-full"
-			/></Div
-		>
-		<Div class="space-y-2"
-			><Label for="notes">Capabilities, lead time, and notes</Label><Textarea
-				id="notes"
-				name="notes"
-				rows={4}
-				class="w-full"
-			/></Div
-		>
-		{#each data.request.questions as question, i}<Div class="space-y-2"
-				><Label for={`question-${i}`}>{question}</Label><Textarea
-					id={`question-${i}`}
-					name={`question-${i}`}
-					maxlength={20000}
+	{#if data.own && !editing}<Button type="button" onclick={() => (editing = true)}
+			>Edit response</Button
+		>{:else}
+		<Form method="POST" class="space-y-5"
+			><Input type="hidden" name="operation" value={data.own ? 'edit' : 'create'} />
+			<Div class="space-y-2"
+				><Label for="name">Your name</Label><Input
+					id="name"
+					name="name"
+					value={data.own?.name ?? ''}
+					required
+					maxlength={200}
+					autocomplete="name"
 					class="w-full"
 				/></Div
-			>{/each}
-		<Button type="submit">Submit response</Button></Form
-	>
-</Card>
+			>
+			<Div class="space-y-2"
+				><Label for="branch">Branch</Label><Input
+					id="branch"
+					name="branch"
+					value={data.own?.branch ?? ''}
+					required
+					maxlength={200}
+					class="w-full"
+				/></Div
+			>
+			<Div class="space-y-2"
+				><Label for="price">Pricing (USD / {data.request.pricingUom})</Label><Input
+					id="price"
+					name="price"
+					value={data.own?.price ?? ''}
+					required
+					type="number"
+					min="0"
+					step="0.01"
+					class="w-full"
+				/></Div
+			>
+			<Div class="space-y-2"
+				><Label for="notes">Capabilities, lead time, and notes</Label><Textarea
+					id="notes"
+					name="notes"
+					value={data.own?.answers.notes ?? ''}
+					rows={4}
+					class="w-full"
+				/></Div
+			>
+			{#each data.request.questions as question, i}<Div class="space-y-2"
+					><Label for={`question-${i}`}>{question}</Label><Textarea
+						id={`question-${i}`}
+						name={`question-${i}`}
+						value={data.own?.answers[`Question ${i + 1}`] ?? ''}
+						maxlength={20000}
+						class="w-full"
+					/></Div
+				>{/each}
+			<Button type="submit">{data.own ? 'Save changes' : 'Submit response'}</Button></Form
+		>
+	{/if}</Card
+>
 <H2>{data.request.visibility === 'shared' ? 'Responses' : 'Your saved response'}</H2><ResponseList
 	responses={data.responses}
 />

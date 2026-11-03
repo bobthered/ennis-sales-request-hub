@@ -124,7 +124,8 @@
 <Card {theme} {...restProps} class={classes}>
 	<H2>Request details</H2>
 	<P>Your draft already exists. Changes and attachments are saved as you work</P>
-	{#if errorMessage}<P role="alert" class="text-red-700 dark:text-red-300">{errorMessage}</P>{/if}
+	{#if errorMessage}<P role="alert" class="text-neutral-700 dark:text-neutral-300">{errorMessage}</P
+		>{/if}
 	<Form
 		id="request-details"
 		method="POST"

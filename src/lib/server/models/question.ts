@@ -15,6 +15,6 @@ const questionSchema = new Schema(
 );
 
 export type RequestQuestionDocument = InferSchemaType<typeof questionSchema>;
-export const RequestQuestion =
+export const RequestQuestion: Model<RequestQuestionDocument> =
 	(models.RequestQuestion as Model<RequestQuestionDocument> | undefined) ??
-	model('RequestQuestion', questionSchema);
+	model<RequestQuestionDocument>('RequestQuestion', questionSchema);

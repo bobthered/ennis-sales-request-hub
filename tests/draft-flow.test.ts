@@ -132,6 +132,7 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 	expect(stored?.shareTokenHash).not.toBe(token);
 	const list = await fetch(`${origin}/requests`, { headers: { Cookie: cookie } });
 	expect(await list.text()).toContain('Regional print job');
+	const recipientCookie = shared.headers.get('set-cookie')!.split(';')[0];
 	const response = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
 		body: new URLSearchParams({
@@ -141,17 +142,22 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 			pricingUom: 'PK',
 			notes: 'Ready'
 		}),
-		headers: { Origin: origin, Accept: 'application/json' }
+		headers: { Cookie: recipientCookie, Origin: origin, Accept: 'application/json' }
 	});
 	expect(response.status).toBe(200);
-	const responseCookie = response.headers.get('set-cookie')!.split(';')[0];
+	const responseCookie = recipientCookie;
 	const submissions = mongoose.connection.collection('requestresponses');
 	const saved = await submissions.findOne({ requestId: new mongoose.Types.ObjectId(id) });
 	expect(saved?.pricingCents).toBe(12550);
 	expect(saved?.pricingUom).toBe('M');
 	const revise = await fetch(`${origin}/r/${token}`, {
 		method: 'POST',
-		body: new URLSearchParams({ name: 'Jane', branch: 'Dallas', price: '130.00' }),
+		body: new URLSearchParams({
+			name: 'Jane',
+			branch: 'Dallas',
+			price: '130.00',
+			operation: 'edit'
+		}),
 		headers: { Origin: origin, Accept: 'application/json', Cookie: responseCookie }
 	});
 	expect(revise.status).toBe(200);
@@ -160,6 +166,30 @@ it('creates, autosaves, attaches, cleans up, and reopens through the real HTTP r
 		headers: { Cookie: cookie }
 	});
 	expect(await responses.text()).toContain('130.00');
+	const duplicate = await fetch(`${origin}/r/${token}`, {
+		method: 'POST',
+		body: new URLSearchParams({ name: 'Jane', branch: 'Dallas', price: '99' }),
+		headers: { Cookie: responseCookie, Origin: origin, Accept: 'application/json' }
+	});
+	expect(duplicate.status).toBe(409);
+	expect(await submissions.countDocuments()).toBe(1);
+	const question = await fetch(`${origin}/r/${token}/questions`, {
+		method: 'POST',
+		body: new URLSearchParams({ name: 'Jane', question: 'What stock?' }),
+		headers: { Origin: origin, Accept: 'application/json' }
+	});
+	expect(question.status).toBe(200);
+	const q = await mongoose.connection
+		.collection('requestquestions')
+		.findOne({ requestId: new mongoose.Types.ObjectId(id) });
+	expect(q?.question).toBe('What stock?');
+	const answer = await fetch(`${origin}/requests/${id}/questions`, {
+		method: 'POST',
+		body: new URLSearchParams({ id: q!._id.toString(), answer: 'White stock' }),
+		headers: { Cookie: cookie, Origin: origin, Accept: 'application/json' }
+	});
+	expect(answer.status).toBe(200);
+	expect(await (await fetch(`${origin}/r/${token}/questions`)).text()).toContain('White stock');
 	const overview = await fetch(`${origin}/requests/${id}`, { headers: { Cookie: cookie } });
 	expect(await overview.text()).toContain(`/r/${token}`);
 	const dashboard = await fetch(origin, { headers: { Cookie: cookie } });

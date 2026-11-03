@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { A, Div, H1, Nav, P } from 'sveltewind/components';
+	import { A, Div, H1, Tabs, P } from 'sveltewind/components';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import type { LayoutProps } from './$types';
 	let { data, params, children }: LayoutProps = $props();
 </script>
@@ -10,12 +12,18 @@
 			>{data.request.title}</H1
 		><P>{data.request.description}</P></Div
 	>
-	<Nav
+	<Tabs
 		aria-label="Recipient sections"
-		class="flex flex-wrap gap-5 border-b border-slate-200 pb-4 dark:border-slate-800"
-		><A href={`/r/${encodeURIComponent(params.token)}`}>Your response</A><A
-			href={`/r/${encodeURIComponent(params.token)}/questions`}>Questions & Answers</A
-		></Nav
-	>
+		tabs={[
+			{ title: 'Your response', value: `/r/${params.token}` },
+			{ title: 'Questions & Answers', value: `/r/${params.token}/questions` }
+		]}
+		bind:value={
+			() => page.url.pathname,
+			(value) => {
+				void goto(value);
+			}
+		}
+	/>
 	{@render children()}
 </Div>

@@ -7,7 +7,17 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, cookies }) => {
 	await connectDatabase();
 	const r = await sharedRequest(params.token);
-	const token = cookies.get(`response-${r.id}`);
+	let token = cookies.get(`response-${r.id}`);
+	if (!token) {
+		token = randomBytes(32).toString('hex');
+		cookies.set(`response-${r.id}`, token, {
+			path: '/',
+			httpOnly: true,
+			sameSite: 'lax',
+			maxAge: 31536000
+		});
+	}
+	const own = await RequestResponse.findOne({ requestId: r._id, editTokenHash: hashToken(token) });
 	const filter =
 		r.visibility === 'shared'
 			? { requestId: r._id }
@@ -16,6 +26,14 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 				: null;
 	const rows = filter ? await RequestResponse.find(filter).sort({ createdAt: -1 }) : [];
 	return {
+		own: own
+			? {
+					name: own.name,
+					branch: own.branch,
+					price: ((own.pricingCents ?? 0) / 100).toFixed(2),
+					answers: Object.fromEntries(own.answers ?? [])
+				}
+			: null,
 		responses: rows.map((row) => ({
 			name: row.name,
 			branch: row.branch,
@@ -30,6 +48,16 @@ export const actions = {
 		await connectDatabase();
 		const r = await sharedRequest(params.token);
 		const form = await request.formData();
+		const identity = cookies.get(`response-${r.id}`);
+		if (!identity) return fail(400, { message: 'Reload this page before submitting.' });
+		const existing = await RequestResponse.findOne({
+			requestId: r._id,
+			editTokenHash: hashToken(identity)
+		});
+		const editing = form.get('operation') === 'edit';
+		if (existing && !editing)
+			return fail(409, { message: 'You already submitted a response. Use Edit response.' });
+		if (!existing && editing) return fail(404, { message: 'Response not found' });
 		try {
 			const read = (key: string, max: number, required = false) => {
 				const v = form.get(key);
