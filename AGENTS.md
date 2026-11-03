@@ -18,17 +18,19 @@ Keep project work inside this directory.
 
 ## Product rules
 
-- Creators sign in and manage their own requests. Recipients follow emailed links without accounts.
+- For the MVP, creators are identified by a persistent HttpOnly browser cookie; MongoDB stores its SHA-256 hash as creatorId. Scope all creator queries and mutations to that ID. Clearing cookies or switching browsers loses access; login and recovery links are not implemented. Recipients follow emailed links without accounts.
 - Creators choose response visibility: creator-only (plus each recipient's own response), or everyone with the link. Explain visibility before submission.
 - Recipients can revise only their own response while the request is open via a separate edit token. Store token hashes, never plaintext edit tokens, in MongoDB.
 - Participation is voluntary. No required invite list, participation tracking, or automatic reminders.
 - Shared attachments and Questions & Answers belong to requests. Recipients ask; only creators answer.
 - Before enabling writes, enforce ownership, visibility, edit tokens, and open/closed status on the server. Never expose private answers or edit tokens through public loaders.
-- Current routes are scaffolds, not authenticated or persistent functionality. Sample requests are removed; do not reintroduce fixtures into user-facing request lists. Keep this explicit until backend work is complete.
+- Request creation, draft autosave, final save, and creator attachment uploads/downloads persist in MongoDB. Recipient response/sharing routes remain scaffolds. Do not reintroduce sample requests.
+- Starting a request is a POST operation: delete only this creator's untouched blank drafts, then create a new draft before opening the editor. Preserve any draft with activity, text, questions, a date, changed visibility, attachments, or a share token. Never delete another creator's drafts.
+- Attachments are stored in MongoDB for this MVP: 1 MB per file, 3 MB total, at most 10 files per request. Normal queries must not return file bytes. Update these limits/storage together if requirements grow.
 
 ## Validation
 
-Run `npm run check`, `npm run lint`, and `npm run build` after meaningful changes.
+Run `npm test`, `npm run check`, `npm run lint`, and `npm run build` after meaningful changes.
 
 ## Commit suggestions
 

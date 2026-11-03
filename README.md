@@ -26,7 +26,7 @@ The header's cog opens appearance settings with Dark, Light, and OS choices. OS 
 | `/`                               | Introduction and preview entry points   |
 | `/login`                          | Creator sign-in placeholder             |
 | `/requests`                       | Creator request list                    |
-| `/requests/new`                   | Create request form preview             |
+| `/requests/new`                   | Start a persistent draft via POST       |
 | `/requests/[requestId]`           | Creator overview and shared attachments |
 | `/requests/[requestId]/edit`      | Edit request form preview               |
 | `/requests/[requestId]/responses` | Consolidated responses                  |
@@ -36,11 +36,19 @@ The header's cog opens appearance settings with Dark, Light, and OS choices. OS 
 | `/r/[token]/submitted`            | Submission confirmation preview         |
 | `/r/[token]/edit/[editToken]`     | Personal response correction preview    |
 
-## Backend status
+## Draft workflow
 
-These are route and UI scaffolds. Forms do not save; authentication, email, and file storage are not implemented. Sample requests have been removed. The request list starts empty; detail and recipient routes return 404 until real request loading is implemented. The disabled actions and preview notice make this explicit.
+Create a request posts to `/requests/new`. The server removes only the current browser owner's untouched blank drafts, creates a new MongoDB document, and redirects to its editor. GET requests and link preloads never create or delete records. Drafts with any recorded edit, content, questions, date, changed visibility, attachments, or share token are preserved. Cleanup does not use an inactivity timeout.
 
-Starter Mongoose models live under `src/lib/server/models`: requests, responses, and questions. They use the default connection managed by `src/lib/server/db.ts`. File metadata is modeled, but binary files need a storage provider. Authentication, authorization, request validation, token issuance/verification, and visibility filtering must be implemented server-side before enabling data access or writes.
+The editor autosaves changes and allows files to be attached before final save. Save request requires a title and description and changes the status to open. My Requests lists this browser's records. A persistent HttpOnly cookie identifies the creator; MongoDB stores a hash, not the cookie's raw token. There is no login or cross-device recovery yet. Clearing cookies loses access to the browser's requests.
+
+Files are stored directly in MongoDB for this MVP, limited to 1 MB each, 3 MB total and 10 files per request. Uploads update the attachment and activity marker atomically; ordinary queries exclude bytes. Creator downloads require the owner cookie and are served as attachments. Larger file storage can be added later.
+
+Recipient links, responses, Q&A posting, manual deletion, and closing requests remain unimplemented. The sample requests are removed. No live application data was used by the automated integration tests.
+
+## Tests
+
+`npm test` runs integration tests against a temporary local MongoDB using mongodb-memory-server. The first run downloads a MongoDB binary and needs network access. Tests never read `.env` or connect to the application's database.
 
 ## MongoDB connection
 
@@ -48,7 +56,7 @@ Add `MONGODB_URI` to your local `.env`, including the database name in the URI, 
 
 `src/env.ts` declares the private runtime variable. The server hook awaits `connectDatabase()` before resolving requests when it is configured. The helper reuses the default Mongoose connection and shares an in-flight connection attempt across concurrent requests. Failed attempts are cleared for retry. The pool is capped at 10 connections per server instance, with a five-second server-selection timeout. Driver errors and the URI are not exposed to the browser.
 
-Builds and previews without a configured URI do not connect. A configured but unavailable database returns a generic 503 response. Connecting does not enable CRUD or populate the empty request list. For background tasks or future server functions outside the request hook, await `connectDatabase()` before using a model. Do not disconnect after each operation.
+Builds and previews without a configured URI do not connect. A configured but unavailable database returns a generic 503 response. The draft workflow uses this connection for creator-owned documents. For background tasks or future server functions outside the request hook, await `connectDatabase()` before using a model. Do not disconnect after each operation.
 
 The creator chooses response visibility. Recipients can revise their own answers while a request is open. Participation is optional. Everyone with the link sees shared questions and creator answers.
 

@@ -7,6 +7,7 @@
 		A,
 		Button,
 		Div,
+		Form,
 		Header,
 		Label,
 		Main,
@@ -43,7 +44,9 @@
 		>
 		<Div class="flex items-center gap-4">
 			<A href="/requests" variants={['button.base', 'button.variant.ghost']}>My Requests</A>
-			<A href="/requests/new" variants={['button.base', 'button.variant.ghost']}>New Request</A>
+			<Form method="POST" action="/requests/new"
+				><Button type="submit" variants={['ghost']}>New Request</Button></Form
+			>
 			<Popover
 				role="dialog"
 				aria-label="Appearance settings"
@@ -78,7 +81,8 @@
 	class="border-b border-amber-200 bg-amber-50 px-6 py-3 dark:border-amber-900 dark:bg-amber-950"
 >
 	<P class="mx-auto max-w-6xl text-sm text-amber-950 dark:text-amber-100"
-		>App preview · Creating requests, saving responses, and uploads are not connected yet.</P
+		>MVP preview · Requests and attachments save to MongoDB. Recipient responses are not connected
+		yet.</P
 	>
 </Div>
 <Main id="main" class="mx-auto w-full max-w-6xl space-y-8 px-6 py-10 sm:py-14">

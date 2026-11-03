@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { A, Div, H1, P } from 'sveltewind/components';
+	import { A, Button, Div, Form, H1, P } from 'sveltewind/components';
 </script>
 
 <svelte:head
@@ -17,7 +17,7 @@
 		>Share project details, collect branch responses, and answer questions in one place.</P
 	>
 	<Div class="flex flex-wrap gap-3"
-		><A href="/requests/new" variants={['button.base']}>New Request</A><A
+		><Form method="POST" action="/requests/new"><Button type="submit">New Request</Button></Form><A
 			href="/requests"
 			variants={['button.base', 'button.variant.ghost']}>My Requests</A
 		></Div

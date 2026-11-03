@@ -1,8 +1,8 @@
 <script lang="ts">
 	import RequestEditor from '#lib/components/RequestEditor.svelte';
 	import type { PageProps } from './$types';
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 </script>
 
-<svelte:head><title>Edit request · Ennis</title></svelte:head>
-<RequestEditor initialTitle={data.request.title} initialDescription={data.request.description} />
+<svelte:head><title>Edit request</title></svelte:head>
+{#key data.request.id}<RequestEditor request={data.request} errorMessage={form?.message} />{/key}

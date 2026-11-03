@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { A, Div, H1, P } from 'sveltewind/components';
-	import RequestEditor from '#lib/components/RequestEditor.svelte';
+	import { A, Button, Div, Form, H1, P } from 'sveltewind/components';
 </script>
 
-<svelte:head><title>Create a request · Ennis</title></svelte:head>
-<Div class="mx-auto max-w-3xl space-y-6"
-	><A href="/requests">← My requests</A><H1>Create a request</H1><P
-		>Give your branches everything they need to respond.</P
-	><RequestEditor /></Div
->
+<svelte:head><title>Create a request</title></svelte:head>
+<Div class="mx-auto max-w-3xl space-y-6">
+	<A href="/requests">My Requests</A><H1>Create a request</H1>
+	<P>Start a draft to add project details and files</P>
+	<Form method="POST"><Button type="submit">Create a request</Button></Form>
+</Div>

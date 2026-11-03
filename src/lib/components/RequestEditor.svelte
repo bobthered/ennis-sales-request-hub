@@ -1,9 +1,12 @@
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
+	import { beforeNavigate } from '$app/navigation';
 	import {
+		A,
 		Button,
 		Card,
 		Div,
+		Form,
 		H2,
 		Input,
 		Label,
@@ -13,74 +16,199 @@
 		Textarea
 	} from 'sveltewind/components';
 	import { theme as globalTheme } from 'sveltewind/theme';
-	type Props = ComponentProps<typeof Card> & { initialTitle?: string; initialDescription?: string };
+	type Attachment = { name: string; key: string; size: number };
+	type Draft = {
+		id: string;
+		title: string;
+		description: string;
+		due: string;
+		visibility: string;
+		questions: string;
+		attachments: Attachment[];
+		status: string;
+	};
+	type Props = ComponentProps<typeof Card> & { request: Draft; errorMessage?: string };
 	let {
-		initialTitle = '',
-		initialDescription = '',
+		request,
+		errorMessage = '',
 		class: className = '',
 		theme = globalTheme,
 		variants = [],
 		...restProps
 	}: Props = $props();
 	const classes = $derived(theme.resolve('requestEditor', variants, className));
+	let detailsForm = $state<HTMLFormElement | null>(null);
+	let attachments = $state<Attachment[]>([]);
+	$effect(() => {
+		attachments = request.attachments;
+	});
+	let status = $state('Draft created');
+	let dirty = $state(false);
+	let working = $state(false);
+	let uploading = $state(false);
+	let submitting = false;
+	let pending: FormData | null = null;
+	let queue: Promise<boolean> = Promise.resolve(true);
+	const endpoint = $derived(`/api/requests/${request.id}`);
+	async function send(values: FormData) {
+		const response = await fetch(endpoint, { method: 'POST', body: values });
+		const data = await response.json();
+		if (!response.ok) throw new Error(data.message || 'Unable to save. Please try again.');
+		return data;
+	}
+	function autosave() {
+		if (!detailsForm) return Promise.resolve(false);
+		dirty = true;
+		pending = new FormData(detailsForm);
+		if (working) return queue;
+		working = true;
+		status = 'Saving draft...';
+		queue = (async () => {
+			try {
+				while (pending) {
+					const values = pending;
+					pending = null;
+					await send(values);
+				}
+				dirty = false;
+				status = 'Draft saved';
+				return true;
+			} catch (e) {
+				status = e instanceof Error ? e.message : 'Unable to save draft';
+				return false;
+			} finally {
+				working = false;
+			}
+		})();
+		return queue;
+	}
+	async function finish(event: SubmitEvent) {
+		if (submitting) return;
+		event.preventDefault();
+		if (uploading || !(await autosave())) return;
+		submitting = true;
+		detailsForm?.requestSubmit();
+	}
+	async function upload(event: SubmitEvent) {
+		event.preventDefault();
+		const form = event.currentTarget as HTMLFormElement;
+		uploading = true;
+		try {
+			if (!(await autosave())) return;
+			const data = await send(new FormData(form));
+			attachments = [...attachments, data];
+			status = 'File attached to draft';
+			form.reset();
+		} catch (e) {
+			status = e instanceof Error ? e.message : 'Upload failed';
+		} finally {
+			uploading = false;
+		}
+	}
+	beforeNavigate(({ cancel }) => {
+		if (dirty || uploading) cancel();
+	});
 </script>
 
+<svelte:window
+	onbeforeunload={(event) => {
+		if (dirty || uploading) {
+			event.preventDefault();
+			event.returnValue = '';
+		}
+	}}
+/>
 <Card {theme} {...restProps} class={classes}>
 	<H2>Request details</H2>
-	<Div class="space-y-2"
-		><Label for="title">Project title</Label><Input
-			id="title"
-			name="title"
-			value={initialTitle}
-			class="w-full"
-			placeholder="What do you need help with?"
-		/></Div
+	<P>Your draft already exists. Changes and attachments are saved as you work</P>
+	{#if errorMessage}<P role="alert" class="text-red-700 dark:text-red-300">{errorMessage}</P>{/if}
+	<Form
+		method="POST"
+		bind:element={detailsForm}
+		oninput={() => autosave()}
+		onchange={() => autosave()}
+		onsubmit={finish}
+		class="space-y-5"
 	>
-	<Div class="space-y-2"
-		><Label for="description">Project details</Label><Textarea
-			id="description"
-			name="description"
-			value={initialDescription}
-			rows={4}
-			class="w-full"
-		/></Div
-	>
-	<Div class="space-y-2"
-		><Label for="due">Due date (optional)</Label><Input
-			id="due"
-			name="due"
-			type="date"
-			class="w-full"
-		/></Div
-	>
-	<Div class="space-y-2"
-		><Label for="visibility">Who can see responses?</Label><Select
-			id="visibility"
-			name="visibility"
-			class="w-full"
-			><Option value="creator-only">Only me (recipients can see their own)</Option><Option
-				value="shared">Everyone with the request link</Option
-			></Select
-		></Div
-	>
-	<Div class="space-y-2"
-		><Label for="questions">Additional questions</Label><Textarea
-			id="questions"
-			name="questions"
-			rows={3}
-			class="w-full"
-			placeholder="For example: What is your production lead time?"
-		/><P class="text-sm">Name, branch, and pricing are included in this starter form.</P></Div
-	>
-	<Div class="space-y-2"
-		><Label for="attachments">Shared attachments</Label><Input
-			id="attachments"
-			type="file"
-			multiple
-			disabled
-			class="w-full"
-		/><P class="text-sm">File uploads will be available once storage is connected.</P></Div
-	>
-	<P class="text-sm">Form preview only. Creating and saving requests is not connected yet.</P>
-	<Button disabled>Save request</Button>
+		<Div class="space-y-2"
+			><Label for="title">Project title</Label><Input
+				id="title"
+				name="title"
+				value={request.title}
+				required
+				maxlength={200}
+				class="w-full"
+			/></Div
+		>
+		<Div class="space-y-2"
+			><Label for="description">Project details</Label><Textarea
+				id="description"
+				name="description"
+				value={request.description}
+				required
+				maxlength={20000}
+				rows={4}
+				class="w-full"
+			/></Div
+		>
+		<Div class="space-y-2"
+			><Label for="due">Due date (optional)</Label><Input
+				id="due"
+				name="due"
+				type="date"
+				value={request.due}
+				class="w-full"
+			/></Div
+		>
+		<Div class="space-y-2"
+			><Label for="visibility">Who can see responses?</Label><Select
+				id="visibility"
+				name="visibility"
+				value={request.visibility}
+				class="w-full"
+				><Option value="creator-only">Only me (recipients can see their own)</Option><Option
+					value="shared">Everyone with the request link</Option
+				></Select
+			></Div
+		>
+		<Div class="space-y-2"
+			><Label for="questions">Additional questions</Label><Textarea
+				id="questions"
+				name="questions"
+				value={request.questions}
+				rows={3}
+				maxlength={10000}
+				class="w-full"
+			/><P class="text-sm">One question per line. Name, branch, and pricing are included</P></Div
+		>
+		<Button type="submit" disabled={uploading || request.status === 'closed'}>Save request</Button>
+	</Form>
+	<Div class="space-y-3">
+		<H2>Shared attachments</H2>
+		{#each attachments as file (file.key)}<Div
+				><A href={`/api/requests/${request.id}/files/${file.key}`} download>{file.name}</A><P
+					class="text-sm">{Math.ceil(file.size / 1024)} KB</P
+				></Div
+			>{/each}
+		{#if !attachments.length}<P>No files attached</P>{/if}
+		<Form method="POST" enctype="multipart/form-data" onsubmit={upload} class="space-y-3">
+			<Input type="hidden" name="operation" value="upload" />
+			<Label for="file">Add a file</Label><Input
+				id="file"
+				name="file"
+				type="file"
+				required
+				disabled={uploading || request.status === 'closed'}
+				class="w-full"
+			/>
+			<P class="text-sm">Up to 1 MB per file, 3 MB total, and 10 files per request</P>
+			<Button
+				type="submit"
+				variants={['outline']}
+				disabled={uploading || request.status === 'closed'}
+				>{uploading ? 'Uploading...' : 'Attach file'}</Button
+			>
+		</Form>
+	</Div>
+	<P role="status" aria-live="polite" class="text-sm">{status}</P>
 </Card>

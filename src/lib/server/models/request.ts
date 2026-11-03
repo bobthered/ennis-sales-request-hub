@@ -1,10 +1,13 @@
-import { Schema, model, models, type InferSchemaType, type Model } from 'mongoose';
+import mongoose, { type InferSchemaType, type Model } from 'mongoose';
+
+const { Schema, model, models } = mongoose;
 
 const requestSchema = new Schema(
 	{
 		creatorId: { type: String, required: true, index: true },
-		title: { type: String, required: true, trim: true, maxlength: 200 },
-		description: { type: String, required: true, maxlength: 20000 },
+		title: { type: String, default: '', trim: true, maxlength: 200 },
+		description: { type: String, default: '', maxlength: 20000 },
+		startedAt: { type: Date, default: null },
 		status: { type: String, enum: ['draft', 'open', 'closed'], default: 'draft', required: true },
 		visibility: {
 			type: String,
@@ -26,7 +29,8 @@ const requestSchema = new Schema(
 				name: { type: String, required: true },
 				storageKey: { type: String, required: true },
 				contentType: String,
-				size: Number
+				size: Number,
+				data: { type: Buffer, select: false }
 			}
 		]
 	},
@@ -35,6 +39,6 @@ const requestSchema = new Schema(
 
 requestSchema.index({ shareTokenHash: 1 }, { unique: true, sparse: true });
 export type SalesRequestDocument = InferSchemaType<typeof requestSchema>;
-export const SalesRequest =
+export const SalesRequest: Model<SalesRequestDocument> =
 	(models.SalesRequest as Model<SalesRequestDocument> | undefined) ??
-	model('SalesRequest', requestSchema);
+	model<SalesRequestDocument>('SalesRequest', requestSchema);

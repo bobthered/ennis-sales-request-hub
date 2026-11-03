@@ -5,7 +5,9 @@
 </script>
 
 <Div class="space-y-3"
-	><A href="/requests">← My requests</A><H1>{data.request.title}</H1><P>Creator workspace</P></Div
+	><A href="/requests">← My requests</A><H1>{data.request.title || 'Untitled request'}</H1><P
+		>Creator workspace</P
+	></Div
 >
 <Nav
 	aria-label="Request sections"
